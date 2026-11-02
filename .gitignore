@@ -17,6 +17,9 @@ tsbuildinfo
 .env.production.local
 config.json
 
+# Bot data (SQLite)
+data/
+
 # Logs
 logs
 *.log

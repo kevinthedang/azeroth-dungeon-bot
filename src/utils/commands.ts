@@ -1,11 +1,10 @@
-import { ChatInputApplicationCommandData, Client, ChatInputCommandInteraction, ApplicationCommandOption } from "discord.js";
+import { Awaitable, ChatInputApplicationCommandData, Client, ChatInputCommandInteraction } from "discord.js";
 
 export interface SlashCommand extends ChatInputApplicationCommandData {
     run: (
         client: Client,
-        interaction: ChatInputCommandInteraction,
-        options?: ApplicationCommandOption[]
-    ) => void
+        interaction: ChatInputCommandInteraction
+    ) => Awaitable<void>
 }
 
 /**
