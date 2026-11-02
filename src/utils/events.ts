@@ -3,6 +3,8 @@ import { Awaitable, Client, ClientEvents } from 'discord.js'
 export type LogMethod = (...args: unknown[]) => void
 export type EventKeys = keyof ClientEvents // only wants keys of ClientEvents object
 
+export { Events } from 'discord.js'
+
 // Event properties
 export interface EventProps {
     client: Client,

@@ -1,6 +1,8 @@
 import ready from './ready.js'
+import interactionCreate from './interactionCreate.js'
 import type { Event } from '../utils/index.js'
 
 export default [
-    ready
+    ready,
+    interactionCreate,
 ] as Event[]
