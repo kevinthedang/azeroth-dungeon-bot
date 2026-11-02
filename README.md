@@ -1,6 +1,6 @@
 <div align="center">
     <h1>Azeroth Chronicle</h1>
-    <h3>World of Warcraft Dungeon Discord Bot</h3>
+    <h3>World of Warcraft Dungeon Tracking Discord Bot</h3>
 </div>
 
 > [!NOTE]
