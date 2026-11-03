@@ -1,6 +1,19 @@
-import { ApplicationCommandOptionType, ChatInputCommandInteraction, Client } from "discord.js";
-import { SlashCommand, errorEmbed, infoEmbed } from "../utils/index.js";
-import { attachMessage, buildRunEmbed, formatElapsed, getActiveRun, getPersonalBest, startRun } from "../timers.js";
+import {
+    ApplicationCommandOptionType,
+    ChatInputCommandInteraction,
+    Client,
+} from "discord.js";
+import { SlashCommand, errorEmbed, infoEmbed, parseMemberTokens, resolveMemberTokens } from "../utils/index.js";
+import {
+    attachMessage,
+    buildRunEmbed,
+    formatElapsed,
+    getActiveRun,
+    getPersonalBest,
+    getRunMembers,
+    startRun,
+    type RunMember,
+} from "../core/index.js";
 
 export const Start: SlashCommand = {
     name: "start",
@@ -11,8 +24,15 @@ export const Start: SlashCommand = {
             type: ApplicationCommandOptionType.String,
             name: "dungeon",
             description: "Name of the dungeon being run (defaults to \"Dungeon\")",
-            required: false,
+            required: true,
             max_length: 100,
+        },
+        {
+            type: ApplicationCommandOptionType.String,
+            name: "members",
+            description: "Comma-separated Discord usernames or mentions (e.g. alice, @bob)",
+            required: true,
+            max_length: 1000,
         },
     ],
 
@@ -20,7 +40,8 @@ export const Start: SlashCommand = {
         await interaction.deferReply();
 
         try {
-            if (!interaction.guildId) {
+            const guild = interaction.guild;
+            if (!guild) {
                 await interaction.editReply({
                     embeds: [errorEmbed('This command can only be used inside a server.')],
                 });
@@ -41,13 +62,47 @@ export const Start: SlashCommand = {
                 return;
             }
 
+            // resolve the party against real guild members before creating the run
+            const memberInput = interaction.options.getString('members')?.trim() ?? '';
+            const tokens = parseMemberTokens(memberInput);
+            let party: RunMember[] = [];
+
+            if (tokens.length > 0) {
+                const guildMembers = await guild.members.fetch();
+                const { members, unknown, ambiguous } = resolveMemberTokens(guildMembers, tokens);
+
+                if (unknown.length > 0 || ambiguous.length > 0) {
+                    const lines: string[] = [];
+
+                    if (unknown.length > 0)
+                        lines.push(`Not in this server: ${unknown.map(name => `\`${name}\``).join(', ')}`);
+
+                    if (ambiguous.length > 0)
+                        lines.push(`Matched more than one member: ${ambiguous.map(name => `\`${name}\``).join(', ')}`);
+
+                    lines.push('Use a unique Discord username or a mention so I can identify everyone.');
+
+                    await interaction.editReply({
+                        embeds: [errorEmbed(lines.join('\n'), 'Could not add everyone to the party')],
+                    });
+                    return;
+                }
+
+                party = members.map(member => ({
+                    userId: member.id,
+                    username: member.user.username,
+                }));
+            }
+
             const dungeon = interaction.options.getString('dungeon')?.trim() || 'Dungeon';
-            const personalBestMs = getPersonalBest(interaction.guildId, dungeon);
-            const run = startRun(interaction.guildId, interaction.channelId, dungeon);
+            const personalBestMs = getPersonalBest(guild.id, dungeon);
+            const run = startRun(guild.id, interaction.channelId, dungeon, party);
+            const members = getRunMembers(run.id);
 
             // the interaction reply doubles as the live timer message
             const message = await interaction.editReply({
-                embeds: [buildRunEmbed(run, Date.now(), { bestMs: personalBestMs })],
+                embeds: [buildRunEmbed(run, Date.now(), { bestMs: personalBestMs, members })],
+                allowedMentions: { parse: [] },
             });
             attachMessage(run.id, message.id);
         } catch (error) {

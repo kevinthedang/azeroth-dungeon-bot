@@ -3,6 +3,7 @@ import { EmbedBuilder } from 'discord.js'
 /** Shared embed colors so every response feels like the same bot. */
 export const EmbedColor = {
     running: 0x5865f2,
+    paused: 0xfaa61a,
     finished: 0x57f287,
     personalBest: 0xfee75c,
     error: 0xed4245,

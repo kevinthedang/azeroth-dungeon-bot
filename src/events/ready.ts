@@ -1,6 +1,6 @@
 import { ActivityType, Events } from 'discord.js'
 import { event, registerCommands } from '../utils/index.js'
-import { startTimerService } from '../services/timerService.js'
+import { startTimerService } from '../services/index.js'
 import commands from '../commands/index.js'
 
 export default event(Events.ClientReady, ({ log }, client) => {

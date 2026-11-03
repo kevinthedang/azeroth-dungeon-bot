@@ -1,5 +1,5 @@
 import { Client, GatewayIntentBits } from 'discord.js'
-import Keys from './keys.js'
+import { Keys } from './config/index.js'
 import { registerEvents } from './utils/index.js'
 import Events from './events/index.js'
 

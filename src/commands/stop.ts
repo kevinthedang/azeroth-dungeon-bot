@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, Client, MessageFlags } from "discord.js";
-import { SlashCommand, EmbedColor, errorEmbed, infoEmbed, successEmbed } from "../utils/index.js";
-import { buildRunEmbed, finishRun, formatElapsed, getPersonalBest } from "../timers.js";
+import { SlashCommand, errorEmbed, infoEmbed } from "../utils/index.js";
+import { finishRun, getElapsedMs, getPersonalBest } from "../core/index.js";
+import { updateRunMessage } from "../services/index.js";
 
 export const Stop: SlashCommand = {
     name: "stop",
@@ -20,49 +21,27 @@ export const Stop: SlashCommand = {
                 return;
             }
 
-            // compare against the previous record before this run
-            const elapsedMs = (run.endedAt ?? Date.now()) - run.startedAt;
+            // compare against the previous record, excluding paused time
+            const elapsedMs = getElapsedMs(run);
             const previousBestMs = getPersonalBest(run.guildId, run.dungeon, run.id);
             const newPersonalBest = previousBestMs !== null && elapsedMs < previousBestMs;
             const firstRun = previousBestMs === null;
 
-            // freeze the live timer message with its final time and result
-            if (run.messageId) {
-                const channel = await client.channels.fetch(run.channelId).catch(() => null);
-                if (channel?.isTextBased()) {
-                    const message = await channel.messages.fetch(run.messageId).catch(() => null);
-                    await message?.edit({
-                        content: null,
-                        embeds: [
-                            buildRunEmbed(run, Date.now(), {
-                                bestMs: previousBestMs,
-                                newPersonalBest,
-                                firstRun,
-                            }),
-                        ],
-                    }).catch(() => null);
-                }
+            const updated = await updateRunMessage(client, run, {
+                bestMs: previousBestMs,
+                newPersonalBest,
+                firstRun,
+            });
+
+            // the public timer message now holds the result, so drop the
+            // redundant ephemeral reply
+            if (updated) {
+                await interaction.deleteReply().catch(() => null);
+                return;
             }
 
-            const elapsed = formatElapsed(elapsedMs);
-            const best = previousBestMs !== null ? formatElapsed(previousBestMs) : null;
-
-            let summary = `Finished in \`${elapsed}\`.`;
-            if (newPersonalBest && best)
-                summary += `\n🎉 **New personal best!** (was \`${best}\`)`;
-            else if (firstRun)
-                summary += '\n📝 First recorded run.';
-            else if (best)
-                summary += `\nPB \`${best}\`.`;
-
             await interaction.editReply({
-                embeds: [
-                    successEmbed(
-                        summary,
-                        `🏁 ${run.dungeon}`,
-                        newPersonalBest ? EmbedColor.personalBest : EmbedColor.finished,
-                    ),
-                ],
+                embeds: [errorEmbed('The run was stopped, but its timer message could not be updated.')],
             });
         } catch (error) {
             console.error(`[Command: stop]`, error);

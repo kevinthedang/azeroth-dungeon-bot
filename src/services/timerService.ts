@@ -1,5 +1,5 @@
 import type { Client, Message } from 'discord.js'
-import { buildRunEmbed, getActiveRun, getActiveRuns, getPersonalBest, type DungeonRun } from '../timers.js'
+import { buildRunEmbed, getActiveRun, getActiveRuns, getPersonalBest, getRunMembers, type DungeonRun } from '../core/index.js'
 
 /** Discord allows roughly 5 edits per 5 seconds per channel, so 5s is safe. */
 const UPDATE_INTERVAL_MS = 5_000
@@ -9,6 +9,9 @@ let refreshing = false
 
 // keep message objects around so we do not refetch them every tick
 const messageCache = new Map<number, Message>()
+
+// paused runs have static timers, so only render them once
+const pausedRendered = new Set<number>()
 
 /**
  * Start the background loop that keeps every active run's message in sync with
@@ -27,6 +30,7 @@ export function stopTimerService(): void {
     clearInterval(interval)
     interval = null
     messageCache.clear()
+    pausedRendered.clear()
 }
 
 async function refreshTimers(client: Client): Promise<void> {
@@ -41,6 +45,9 @@ async function refreshTimers(client: Client): Promise<void> {
         const activeIds = new Set(runs.map(run => run.id))
         for (const id of messageCache.keys()) {
             if (!activeIds.has(id)) messageCache.delete(id)
+        }
+        for (const id of pausedRendered) {
+            if (!activeIds.has(id)) pausedRendered.delete(id)
         }
 
         for (const run of runs) {
@@ -62,14 +69,22 @@ async function refreshRun(client: Client, run: DungeonRun): Promise<void> {
         const current = getActiveRun(run.channelId)
         if (!current || current.id !== run.id) return
 
+        const isPaused = current.status === 'paused'
+        if (isPaused && pausedRendered.has(current.id)) return
+
         const message = await resolveMessage(client, run)
         if (!message) return
 
         const bestMs = getPersonalBest(current.guildId, current.dungeon, current.id)
+        const members = getRunMembers(current.id)
         await message.edit({
             content: null,
-            embeds: [buildRunEmbed(current, Date.now(), { bestMs })],
+            embeds: [buildRunEmbed(current, Date.now(), { bestMs, members })],
+            allowedMentions: { parse: [] },
         })
+
+        if (isPaused) pausedRendered.add(current.id)
+        else pausedRendered.delete(current.id)
     } catch (error) {
         // the message was probably deleted; let the next tick retry from scratch
         messageCache.delete(run.id)

@@ -6,7 +6,7 @@ import {
     PermissionFlagsBits,
 } from "discord.js";
 import { SlashCommand, errorEmbed, infoEmbed, successEmbed } from "../utils/index.js";
-import { clearHistory } from "../timers.js";
+import { clearHistory } from "../core/index.js";
 
 export const Clear: SlashCommand = {
     name: "clear",
