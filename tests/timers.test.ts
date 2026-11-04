@@ -72,6 +72,19 @@ test('startRun creates a running run with its party in order', () => {
     assert.deepEqual(members.map(member => member.username), ['alice', 'kev'])
 })
 
+test('run numbers are independent for each dungeon in a guild', () => {
+    const guild = unique('guild-run-count')
+    const deadmines1 = core.startRun(guild, unique('channel'), 'The Deadmines')
+    const moonbrook1 = core.startRun(guild, unique('channel'), 'Moon Brook')
+    const deadmines2 = core.startRun(guild, unique('channel'), 'The Deadmines')
+    const moonbrook2 = core.startRun(guild, unique('channel'), 'Moon Brook')
+
+    assert.equal(core.getDungeonRunNumber(deadmines1), 1)
+    assert.equal(core.getDungeonRunNumber(moonbrook1), 1)
+    assert.equal(core.getDungeonRunNumber(deadmines2), 2)
+    assert.equal(core.getDungeonRunNumber(moonbrook2), 2)
+})
+
 test('getActiveRun and getActiveRuns see the live run', () => {
     const guild = unique('guild')
     const channel = unique('channel')
@@ -366,7 +379,7 @@ test('buildRunEmbed renders a running timer with party columns and no card by de
     assert.equal(json.description, '`00:01:05`')
     assert.equal(json.color, 0x5865f2)
     assert.equal(json.image, undefined)
-    assert.match(json.footer.text, /^Started .+ • PB 00:12:34 • run #7$/)
+    assert.match(json.footer.text, /^Started .+ • PB 00:12:34 • run #1$/)
     assert.ok(!JSON.stringify(json).includes('<t:'))
 
     const fields = json.fields ?? []

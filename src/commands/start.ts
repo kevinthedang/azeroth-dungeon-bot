@@ -78,7 +78,31 @@ export const Start: SlashCommand = {
                     return;
                 }
 
-                const guildMembers = await guild.members.fetch();
+                const guildMembers = guild.members.cache.clone();
+
+                for (const token of tokens) {
+                    const mention = token.match(/^<@!?(\d+)>$/);
+                    if (mention) {
+                        const userId = mention[1]!;
+                        if (!guildMembers.has(userId)) {
+                            const member = await guild.members.fetch(userId).catch(() => null);
+                            if (member) guildMembers.set(userId, member);
+                        }
+                        continue;
+                    }
+
+                    if (typeof guild.members.search === 'function') {
+                        const matches = await guild.members.search({
+                            query: token.replace(/^"|"$/g, ''),
+                            limit: 100,
+                        }).catch(() => guildMembers);
+
+                        for (const [userId, member] of matches) {
+                            guildMembers.set(userId, member);
+                        }
+                    }
+                }
+
                 const { members, unknown, ambiguous } = resolveMemberTokens(guildMembers, tokens);
 
                 if (unknown.length > 0 || ambiguous.length > 0) {

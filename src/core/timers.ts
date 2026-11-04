@@ -144,6 +144,14 @@ const deleteHistoryStmt = db.prepare(`
       AND status IN ('finished', 'cancelled')
 `)
 
+const dungeonRunNumberStmt = db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM runs
+    WHERE guild_id = ?
+      AND dungeon COLLATE NOCASE = ?
+      AND id <= ?
+`)
+
 /** Translate a raw SQLite row into a typed run. */
 function toRun(row: Record<string, SQLOutputValue>): DungeonRun {
     return {
@@ -360,6 +368,12 @@ export function formatPacificTime(epochMs: number): string {
     return PACIFIC_TIME.format(new Date(epochMs))
 }
 
+/** Sequence number for this dungeon within a guild, independent of other dungeons. */
+export function getDungeonRunNumber(run: DungeonRun): number {
+    const row = dungeonRunNumberStmt.get(run.guildId, run.dungeon, run.id)
+    return Math.max(1, Number(row?.count ?? 0))
+}
+
 /**
  * Fastest completed run of a dungeon anywhere in the guild, in milliseconds.
  * Excludes `excludeRunId` so a just-finished run can compare against the
@@ -543,7 +557,7 @@ export function buildRunEmbed(
     const imageUrl = options.artUrl !== undefined ? options.artUrl : fallbackImage
 
     const finish = (embed: EmbedBuilder): EmbedBuilder => {
-        footer.push(`run #${run.id}`)
+        footer.push(`run #${getDungeonRunNumber(run)}`)
         if (imageUrl) embed.setImage(imageUrl)
 
         return embed.setFooter({ text: footer.join(' • ') })
