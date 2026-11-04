@@ -53,6 +53,7 @@ db.exec(`
     CREATE TABLE IF NOT EXISTS run_drops (
         id          INTEGER PRIMARY KEY AUTOINCREMENT,
         run_id      INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+        boss        TEXT    NOT NULL DEFAULT '',
         item        TEXT    NOT NULL,
         vendored    INTEGER NOT NULL DEFAULT 0,
         member_id   TEXT,
@@ -105,3 +106,12 @@ function ensureColumn(table: string, column: string, definition: string): void {
 
 ensureColumn('runs', 'paused_total', 'paused_total INTEGER NOT NULL DEFAULT 0')
 ensureColumn('runs', 'paused_at', 'paused_at INTEGER')
+
+const runDropColumns = db.prepare('PRAGMA table_info(run_drops)').all()
+if (
+    !runDropColumns.some(existing => String(existing.name) === 'boss') &&
+    runDropColumns.some(existing => String(existing.name) === 'TEXT')
+) {
+    db.exec('ALTER TABLE run_drops RENAME COLUMN "TEXT" TO boss')
+}
+ensureColumn('run_drops', 'boss', "boss TEXT NOT NULL DEFAULT ''")

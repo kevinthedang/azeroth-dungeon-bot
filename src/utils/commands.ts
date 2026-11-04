@@ -1,9 +1,13 @@
-import { Awaitable, ChatInputApplicationCommandData, Client, ChatInputCommandInteraction } from "discord.js";
+import { Awaitable, AutocompleteInteraction, ChatInputApplicationCommandData, Client, ChatInputCommandInteraction } from "discord.js";
 
 export interface SlashCommand extends ChatInputApplicationCommandData {
     run: (
         client: Client,
         interaction: ChatInputCommandInteraction
+    ) => Awaitable<void>
+    autocomplete?: (
+        client: Client,
+        interaction: AutocompleteInteraction
     ) => Awaitable<void>
 }
 

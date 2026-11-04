@@ -36,6 +36,7 @@ export interface DungeonRun {
 }
 
 export interface RunDrop {
+    boss: string
     item: string
     vendored: boolean
     memberId: string | null
@@ -94,12 +95,12 @@ const selectNotesStmt = db.prepare(`
 `)
 
 const insertDropStmt = db.prepare(`
-    INSERT INTO run_drops (run_id, item, vendored, member_id, member_name, created_at)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO run_drops (run_id, boss, item, vendored, member_id, member_name, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
 `)
 
 const selectDropsStmt = db.prepare(`
-    SELECT item, vendored, member_id, member_name FROM run_drops
+    SELECT boss, item, vendored, member_id, member_name FROM run_drops
     WHERE run_id = ?
     ORDER BY id
 `)
@@ -228,12 +229,14 @@ export function getRunNotes(runId: number): string[] {
 /** Record an item dropped during a run. */
 export function addRunDrop(
     runId: number,
+    boss: string,
     item: string,
     vendored: boolean,
     member: RunMember | null = null,
 ): void {
     insertDropStmt.run(
         runId,
+        boss,
         item,
         vendored ? 1 : 0,
         member?.userId ?? null,
@@ -245,6 +248,7 @@ export function addRunDrop(
 /** Load drops in the order they were recorded. */
 export function getRunDrops(runId: number): RunDrop[] {
     return selectDropsStmt.all(runId).map(row => ({
+        boss: String(row.boss ?? ''),
         item: String(row.item),
         vendored: Number(row.vendored) === 1,
         memberId: row.member_id === null || row.member_id === undefined ? null : String(row.member_id),
@@ -269,6 +273,21 @@ export function getRunMembers(runId: number): RunMember[] {
             sprite: sprite !== null && isSpriteKey(sprite) ? sprite : null,
         }
     })
+}
+
+/** Add a Discord member to an active run's party. */
+export function addRunMember(runId: number, member: RunMember): boolean {
+    const result = insertMemberStmt.run(runId, member.userId, member.username)
+    return Number(result.changes) > 0
+}
+
+/** Remove a party member from a run. */
+export function removeRunMember(runId: number, userId: string): boolean {
+    const result = db.prepare(`
+        DELETE FROM run_members
+        WHERE run_id = ? AND user_id = ?
+    `).run(runId, userId)
+    return Number(result.changes) > 0
 }
 
 /**
@@ -490,10 +509,10 @@ function addDropsField(embed: EmbedBuilder, drops: RunDrop[]): void {
 
     for (const drop of drops) {
         const line = drop.vendored
-            ? `• ${drop.item} — Vendored`
+            ? `• **${drop.boss}** — ${drop.item} — Vendored`
             : drop.memberId
-                ? `• ${drop.item} — <@${drop.memberId}>`
-                : `• ${drop.item} — ${drop.memberName ?? 'Unassigned'}`
+                ? `• **${drop.boss}** — ${drop.item} — <@${drop.memberId}>`
+                : `• **${drop.boss}** — ${drop.item} — ${drop.memberName ?? 'Unassigned'}`
         if (length + line.length + 1 > 1024) {
             omitted++
             continue
@@ -548,8 +567,8 @@ export function buildRunEmbed(
             .setDescription(`Finished in \`${elapsed}\``)
 
         if (options.members?.length) addPartyFields(embed, options.members)
-        if (options.notes?.length) addNotesField(embed, options.notes)
         if (options.drops?.length) addDropsField(embed, options.drops)
+        if (options.notes?.length) addNotesField(embed, options.notes)
 
         return finish(embed)
     }
@@ -563,8 +582,8 @@ export function buildRunEmbed(
             .setDescription(`Paused • \`${elapsed}\``)
 
         if (options.members?.length) addPartyFields(embed, options.members)
-        if (options.notes?.length) addNotesField(embed, options.notes)
         if (options.drops?.length) addDropsField(embed, options.drops)
+        if (options.notes?.length) addNotesField(embed, options.notes)
 
         return finish(embed)
     }
@@ -577,8 +596,8 @@ export function buildRunEmbed(
         .setDescription(`\`${elapsed}\``)
 
     if (options.members?.length) addPartyFields(embed, options.members)
-    if (options.notes?.length) addNotesField(embed, options.notes)
     if (options.drops?.length) addDropsField(embed, options.drops)
+    if (options.notes?.length) addNotesField(embed, options.notes)
 
     return finish(embed)
 }

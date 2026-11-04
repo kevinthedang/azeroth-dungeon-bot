@@ -26,6 +26,12 @@ const DUNGEON_BACKGROUNDS: Record<string, string> = {
     the_deadmines: 'https://cdn.discordapp.com/emojis/1567581384149573774.png',
 }
 
+/** Dungeons currently supported by the /start dropdown. */
+export const DUNGEONS = [
+    'Moon Brook',
+    'The Deadmines',
+] as const
+
 /** Lowercase the dungeon name and replace non-alphanumeric runs with `_`. */
 export function slugifyDungeonName(dungeon: string): string {
     return dungeon

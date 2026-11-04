@@ -48,11 +48,13 @@ export async function loadUtils() {
 }
 
 const commandLoaders = {
+    addMember: () => import('../src/commands/addMember.js'),
     clear: () => import('../src/commands/clear.js'),
     clearName: () => import('../src/commands/clearName.js'),
     clearSprite: () => import('../src/commands/clearSprite.js'),
     drop: () => import('../src/commands/drop.js'),
     extraNote: () => import('../src/commands/extraNote.js'),
+    removeMember: () => import('../src/commands/removeMember.js'),
     setRole: () => import('../src/commands/setRole.js'),
     setName: () => import('../src/commands/setName.js'),
     setSprite: () => import('../src/commands/setSprite.js'),

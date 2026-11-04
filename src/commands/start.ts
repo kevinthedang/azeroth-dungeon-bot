@@ -8,6 +8,7 @@ import { SlashCommand, errorEmbed, infoEmbed, parseMemberTokens, resolveMemberTo
 import {
     attachMessage,
     buildRunEmbed,
+    DUNGEONS,
     formatElapsed,
     getActiveRun,
     getPersonalBest,
@@ -15,7 +16,7 @@ import {
     startRun,
     type RunMember,
 } from "../core/index.js";
-import { ART_FILENAME, renderRunArtBuffer } from "../services/index.js";
+import { ART_FILENAME, MAX_PARTY_MEMBERS, renderRunArtBuffer } from "../services/index.js";
 
 export const Start: SlashCommand = {
     name: "start",
@@ -25,9 +26,9 @@ export const Start: SlashCommand = {
         {
             type: ApplicationCommandOptionType.String,
             name: "dungeon",
-            description: "Name of the dungeon being run (defaults to \"Dungeon\")",
+            description: "Dungeon being run",
             required: true,
-            max_length: 100,
+            choices: DUNGEONS.map(dungeon => ({ name: dungeon, value: dungeon })),
         },
         {
             type: ApplicationCommandOptionType.String,
@@ -70,6 +71,13 @@ export const Start: SlashCommand = {
             let party: RunMember[] = [];
 
             if (tokens.length > 0) {
+                if (tokens.length > MAX_PARTY_MEMBERS) {
+                    await interaction.editReply({
+                        embeds: [errorEmbed(`A dungeon party can have at most ${MAX_PARTY_MEMBERS} members.`)],
+                    });
+                    return;
+                }
+
                 const guildMembers = await guild.members.fetch();
                 const { members, unknown, ambiguous } = resolveMemberTokens(guildMembers, tokens);
 
@@ -96,7 +104,13 @@ export const Start: SlashCommand = {
                 }));
             }
 
-            const dungeon = interaction.options.getString('dungeon')?.trim() || 'Dungeon';
+            const dungeon = interaction.options.getString('dungeon', true).trim();
+            if (!DUNGEONS.some(supported => supported === dungeon)) {
+                await interaction.editReply({
+                    embeds: [errorEmbed(`Choose one of the available dungeons: ${DUNGEONS.join(', ')}.`)],
+                });
+                return;
+            }
             const personalBestMs = getPersonalBest(guild.id, dungeon);
             const run = startRun(guild.id, interaction.channelId, dungeon, party);
             const members = getRunMembers(run.id);

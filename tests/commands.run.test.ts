@@ -8,6 +8,8 @@ const { Start } = await loadCommand('start')
 const { Stop } = await loadCommand('stop')
 const { ExtraNote } = await loadCommand('extraNote')
 const { Drop } = await loadCommand('drop')
+const { AddMember } = await loadCommand('addMember')
+const { RemoveMember } = await loadCommand('removeMember')
 
 afterAll(cleanup)
 
@@ -222,22 +224,20 @@ test('start creates the run, stores the party, and attaches the card', async () 
     assert.equal(json.image?.url, 'attachment://run-card.png')
 })
 
-test('start falls back to "Dungeon" for a blank name and allows an empty party', async () => {
+test('start rejects a dungeon outside the supported dropdown choices', async () => {
     const guild = makeGuild('guild-start-fallback', [])
     const channel = unique('channel')
 
     const { interaction, replies } = makeInteraction({
         guild,
         channelId: channel,
-        strings: { dungeon: '   ', members: '' },
+        strings: { dungeon: 'Dungeon', members: '' },
     })
 
     await Start.run({} as never, interaction as never)
 
-    const run = core.getActiveRun(channel)
-    assert.equal(run?.dungeon, 'Dungeon')
-    assert.deepEqual(core.getRunMembers(run!.id), [])
-    assert.equal(embedJson(replies[0]).title, '⏱️ Dungeon')
+    assert.equal(core.getActiveRun(channel), undefined)
+    assert.match(embedJson(replies[0]).description, /Moon Brook, The Deadmines/)
 })
 
 test('stop reports when there is no active run', async () => {
@@ -337,7 +337,7 @@ test('drop requires a party member when not vendored', async () => {
 
     const { interaction, replies } = makeInteraction({
         channelId: channel,
-        strings: { item: 'Ruby Ring' },
+        strings: { boss: 'Edwin VanCleef', item: 'Ruby Ring' },
         booleans: { vendored: false },
     })
 
@@ -359,26 +359,105 @@ test('drop records a vendored item and non-vendored party allocation', async () 
     const { message, edits } = makeMessage()
     const vendored = makeInteraction({
         channelId: channel,
-        strings: { item: 'Old Belt' },
+        strings: { boss: 'Rhahk\'Zor', item: 'Old Belt' },
         booleans: { vendored: true },
     })
     await Drop.run(makeClient(message) as never, vendored.interaction as never)
 
     const allocated = makeInteraction({
         channelId: channel,
-        strings: { item: 'Ruby Ring' },
+        strings: { boss: 'Edwin VanCleef', item: 'Ruby Ring' },
         booleans: { vendored: false },
         userOption: makeUser('member-1', 'alice'),
     })
     await Drop.run(makeClient(message) as never, allocated.interaction as never)
 
     assert.deepEqual(core.getRunDrops(run.id), [
-        { item: 'Old Belt', vendored: true, memberId: null, memberName: null },
-        { item: 'Ruby Ring', vendored: false, memberId: 'member-1', memberName: 'alice' },
+        { boss: 'Rhahk\'Zor', item: 'Old Belt', vendored: true, memberId: null, memberName: null },
+        { boss: 'Edwin VanCleef', item: 'Ruby Ring', vendored: false, memberId: 'member-1', memberName: 'alice' },
     ])
     assert.equal(edits.length, 2)
 
     const json = embedJson(edits[1])
     const dropsField = json.fields.find((field: { name: string }) => field.name === '📦 Drops')
-    assert.equal(dropsField.value, '• Old Belt — Vendored\n• Ruby Ring — <@member-1>')
+    assert.equal(dropsField.value, '• **Rhahk\'Zor** — Old Belt — Vendored\n• **Edwin VanCleef** — Ruby Ring — <@member-1>')
+})
+
+test('add-member requires an active run', async () => {
+    const user = makeUser('member-1', 'alice')
+    const guild = makeGuild('guild-add-member-empty', [makeMember('member-1', 'alice')])
+    const { interaction, replies } = makeInteraction({
+        guild,
+        channelId: unique('channel'),
+        userOption: user,
+    })
+
+    await AddMember.run({} as never, interaction as never)
+
+    assert.match(embedJson(replies[0]).description, /no active run/)
+})
+
+test('add-member adds an existing server member and updates the card', async () => {
+    const guild = makeGuild('guild-add-member', [makeMember('member-1', 'alice')])
+    const channel = unique('channel')
+    const run = core.startRun(guild.id, channel, 'The Deadmines')
+    core.attachMessage(run.id, 'timer-message')
+
+    const { message, edits } = makeMessage()
+    const { interaction, calls } = makeInteraction({
+        guild,
+        channelId: channel,
+        userOption: makeUser('member-1', 'alice'),
+    })
+
+    await AddMember.run(makeClient(message) as never, interaction as never)
+
+    assert.deepEqual(
+        core.getRunMembers(run.id).map(member => member.username),
+        ['alice'],
+    )
+    assert.equal(edits.length, 1)
+    assert.ok(calls.includes('deleteReply'))
+})
+
+test('add-member rejects someone who is not in the server', async () => {
+    const guild = makeGuild('guild-add-member-unknown', [])
+    const channel = unique('channel')
+    core.startRun(guild.id, channel, 'The Deadmines')
+
+    const { interaction, replies } = makeInteraction({
+        guild,
+        channelId: channel,
+        userOption: makeUser('unknown-member', 'unknown'),
+    })
+
+    await AddMember.run({} as never, interaction as never)
+
+    assert.match(embedJson(replies[0]).description, /not a member of this server/)
+})
+
+test('remove-member removes a member from the active party', async () => {
+    const guild = makeGuild('guild-remove-member', [])
+    const channel = unique('channel')
+    const run = core.startRun(
+        guild.id,
+        channel,
+        'The Deadmines',
+        [{ userId: 'member-1', username: 'alice' }],
+    )
+    core.attachMessage(run.id, 'timer-message')
+
+    const { message, edits } = makeMessage()
+    const { interaction, calls } = makeInteraction({
+        guild,
+        channelId: channel,
+        strings: { member: 'member-1' },
+    })
+
+    await RemoveMember.run(makeClient(message) as never, interaction as never)
+
+    assert.equal(core.removeRunMember(run.id, 'member-1'), false)
+    assert.deepEqual(core.getRunMembers(run.id), [])
+    assert.equal(edits.length, 1)
+    assert.ok(calls.includes('deleteReply'))
 })

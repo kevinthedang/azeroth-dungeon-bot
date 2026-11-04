@@ -43,16 +43,24 @@ test('renders a card for the dungeon background at the minimum width', async () 
     const buffer = await services.renderRunArtBuffer('Test Dungeon', [member(1)])
     assert.ok(buffer)
 
-    assert.deepEqual(pngSize(buffer), { width: 1100, height: 464 })
+    assert.deepEqual(pngSize(buffer), { width: 1100, height: 600 })
 })
 
-test('widens the card for large parties', async () => {
+test('keeps the card width fixed for large parties', async () => {
     const members = Array.from({ length: 6 }, (_, index) => member(index + 10))
 
     const buffer = await services.renderRunArtBuffer('Test Dungeon', members)
     assert.ok(buffer)
 
-    assert.deepEqual(pngSize(buffer), { width: 1664, height: 464 })
+    assert.deepEqual(pngSize(buffer), { width: 1100, height: 600 })
+})
+
+test('keeps equal left and right card borders for five sprites', async () => {
+    const members = Array.from({ length: 5 }, (_, index) => member(index + 20))
+
+    const buffer = await services.renderRunArtBuffer('Test Dungeon', members)
+    assert.ok(buffer)
+    assert.deepEqual(pngSize(buffer), { width: 1100, height: 600 })
 })
 
 test('caches identical card renders', async () => {
@@ -68,7 +76,7 @@ test('caches identical card renders', async () => {
 test('uses default.png when the dungeon has no art of its own', async () => {
     const buffer = await services.renderRunArtBuffer('Fresh Dungeon', [member(30)])
     assert.ok(buffer)
-    assert.deepEqual(pngSize(buffer), { width: 1100, height: 464 })
+    assert.deepEqual(pngSize(buffer), { width: 1100, height: 400 })
 })
 
 test('returns null when no background exists at all', async () => {
@@ -107,7 +115,7 @@ test('a broken sprite does not take the card down', async () => {
     try {
         const buffer = await services.renderRunArtBuffer('Broken Sprite', [member(50)])
         assert.ok(buffer)
-        assert.deepEqual(pngSize(buffer), { width: 1100, height: 464 })
+        assert.deepEqual(pngSize(buffer), { width: 1100, height: 400 })
     } finally {
         if (previous === undefined) delete process.env.AZEROTH_ASSETS_DIR
         else process.env.AZEROTH_ASSETS_DIR = previous
@@ -122,7 +130,7 @@ test('unknown sprite keys are skipped without failing the card', async () => {
     ])
 
     assert.ok(buffer)
-    assert.deepEqual(pngSize(buffer), { width: 1100, height: 464 })
+    assert.deepEqual(pngSize(buffer), { width: 1100, height: 600 })
 })
 
 test('exposes the attachment filename used by the embed', () => {

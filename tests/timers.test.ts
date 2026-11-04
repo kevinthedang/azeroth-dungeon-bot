@@ -202,6 +202,30 @@ test('pauseRun and resumeRun do nothing without a matching run', () => {
     assert.equal(core.resumeRun(unique('channel')), null)
 })
 
+test('addRunMember adds members once and leaves existing members unchanged', () => {
+    const run = core.startRun(unique('guild'), unique('channel'), 'The Deadmines')
+
+    assert.equal(core.addRunMember(run.id, { userId: 'member-1', username: 'alice' }), true)
+    assert.equal(core.addRunMember(run.id, { userId: 'member-1', username: 'alice' }), false)
+    assert.deepEqual(core.getRunMembers(run.id).map(member => member.username), ['alice'])
+})
+
+test('removeRunMember removes only the selected party member', () => {
+    const run = core.startRun(
+        unique('guild'),
+        unique('channel'),
+        'The Deadmines',
+        [
+            { userId: 'member-1', username: 'alice' },
+            { userId: 'member-2', username: 'bob' },
+        ],
+    )
+
+    assert.equal(core.removeRunMember(run.id, 'member-1'), true)
+    assert.equal(core.removeRunMember(run.id, 'member-1'), false)
+    assert.deepEqual(core.getRunMembers(run.id).map(member => member.username), ['bob'])
+})
+
 test('run notes are appended and stored per run', () => {
     const channel = unique('channel')
     const run = core.startRun(unique('guild'), channel, 'The Deadmines')
@@ -221,15 +245,15 @@ test('run drops are stored with vendored and party recipient state', () => {
         [{ userId: 'member-1', username: 'alice' }],
     )
 
-    core.addRunDrop(run.id, 'Old Belt', true)
-    core.addRunDrop(run.id, 'Ruby Ring', false, {
+    core.addRunDrop(run.id, 'The Deadmines', 'Old Belt', true)
+    core.addRunDrop(run.id, 'Edwin VanCleef', 'Ruby Ring', false, {
         userId: 'member-1',
         username: 'alice',
     })
 
     assert.deepEqual(core.getRunDrops(run.id), [
-        { item: 'Old Belt', vendored: true, memberId: null, memberName: null },
-        { item: 'Ruby Ring', vendored: false, memberId: 'member-1', memberName: 'alice' },
+        { boss: 'The Deadmines', item: 'Old Belt', vendored: true, memberId: null, memberName: null },
+        { boss: 'Edwin VanCleef', item: 'Ruby Ring', vendored: false, memberId: 'member-1', memberName: 'alice' },
     ])
 })
 

@@ -1,8 +1,10 @@
 import { Clear } from "./clear.js";
 import { ClearName } from "./clearName.js";
 import { ClearSprite } from "./clearSprite.js";
+import { AddMember } from "./addMember.js";
 import { Drop } from "./drop.js";
 import { ExtraNote } from "./extraNote.js";
+import { RemoveMember } from "./removeMember.js";
 import { SetName } from "./setName.js";
 import { SetRole } from "./setRole.js";
 import { SetSprite } from "./setSprite.js";
@@ -11,11 +13,13 @@ import { Stop } from "./stop.js";
 import { SlashCommand } from "../utils/index.js";
 
 export default [
+    AddMember,
     Clear,
     ClearName,
     ClearSprite,
     Drop,
     ExtraNote,
+    RemoveMember,
     SetName,
     SetRole,
     SetSprite,

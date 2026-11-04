@@ -6,7 +6,7 @@ import {
     PermissionFlagsBits,
 } from "discord.js";
 import { SlashCommand, errorEmbed, infoEmbed, successEmbed } from "../utils/index.js";
-import { clearHistory } from "../core/index.js";
+import { clearHistory, DUNGEONS } from "../core/index.js";
 
 export const Clear: SlashCommand = {
     name: "clear",
@@ -18,7 +18,7 @@ export const Clear: SlashCommand = {
             name: "dungeon",
             description: "Name of the dungeon whose history should be cleared",
             required: true,
-            max_length: 100,
+            choices: DUNGEONS.map(dungeon => ({ name: dungeon, value: dungeon })),
         },
     ],
 
@@ -44,6 +44,12 @@ export const Clear: SlashCommand = {
             if (!dungeon) {
                 await interaction.editReply({
                     embeds: [errorEmbed('Please provide the name of the dungeon to clear.')],
+                });
+                return;
+            }
+            if (!DUNGEONS.some(supported => supported === dungeon)) {
+                await interaction.editReply({
+                    embeds: [errorEmbed(`Choose one of the available dungeons: ${DUNGEONS.join(', ')}.`)],
                 });
                 return;
             }

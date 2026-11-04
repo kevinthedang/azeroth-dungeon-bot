@@ -15,6 +15,13 @@ export const Drop: SlashCommand = {
     options: [
         {
             type: ApplicationCommandOptionType.String,
+            name: "boss",
+            description: "Name of the boss that dropped the item",
+            required: true,
+            max_length: 100,
+        },
+        {
+            type: ApplicationCommandOptionType.String,
             name: "item",
             description: "Name of the item that dropped",
             required: true,
@@ -46,8 +53,16 @@ export const Drop: SlashCommand = {
                 return;
             }
 
+            const boss = interaction.options.getString('boss', true).trim();
             const item = interaction.options.getString('item', true).trim();
             const vendored = interaction.options.getBoolean('vendored', true);
+
+            if (!boss) {
+                await interaction.editReply({
+                    embeds: [errorEmbed('The boss name cannot be empty.')],
+                });
+                return;
+            }
 
             if (!item) {
                 await interaction.editReply({
@@ -75,7 +90,7 @@ export const Drop: SlashCommand = {
                 }
             }
 
-            addRunDrop(active.id, item, vendored, member);
+            addRunDrop(active.id, boss, item, vendored, member);
 
             const updated = await updateRunMessage(client, active);
             if (updated) {

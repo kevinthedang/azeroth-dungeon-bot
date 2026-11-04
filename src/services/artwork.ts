@@ -6,16 +6,15 @@ import type { RunMember } from '../core/index.js'
 
 const WIDTH = 1100
 const PADDING = 64
-const SPRITE_SIZE = 256
+const SPRITE_SIZE = 192
 const NAME_FONT_SIZE = 48
 const LINE_GAP = 32
 const MEMBER_GAP = 16
 
-/** Width available for a name before it would run into its neighbour. */
-const NAME_BOX_WIDTH = SPRITE_SIZE - MEMBER_GAP
 const NAME_MIN_FONT_SIZE = 20
 
 const MAX_CACHED_ART = 32
+export const MAX_PARTY_MEMBERS = 10
 
 /** File name used when the run card is attached to a message. */
 export const ART_FILENAME = 'run-card.png'
@@ -72,45 +71,52 @@ function spriteSource(key: string): string | undefined {
 
 /**
  * Render a run card: dungeon background with each member's name above their
- * sprite, side by side, centered. Returns the composite as a PNG buffer.
+ * sprite, side by side from the bottom-left corner. Returns the composite as
+ * a PNG buffer.
  */
 export async function renderRunArt(backgroundUrl: string, members: RunMember[]): Promise<Buffer> {
     const memberCount = Math.max(members.length, 1)
-    const width = Math.max(WIDTH, memberCount * SPRITE_SIZE + PADDING * 2)
-    const height = PADDING * 2 + NAME_FONT_SIZE + LINE_GAP + SPRITE_SIZE
+    const visibleMembers = members.slice(0, MAX_PARTY_MEMBERS)
+    const visibleCount = Math.max(visibleMembers.length, 1)
+    const availableForSprites = WIDTH - PADDING * 2 - Math.max(0, visibleCount - 1) * MEMBER_GAP
+    const spriteSize = Math.min(SPRITE_SIZE, Math.floor(availableForSprites / visibleCount))
+    const nameBoxWidth = spriteSize - MEMBER_GAP
+    const width = WIDTH
+
+    const background = await loadImage(backgroundUrl)
+    const contentHeight = PADDING * 2 + NAME_FONT_SIZE + LINE_GAP + spriteSize
+    const height = Math.max(contentHeight, background.height)
 
     const canvas = createCanvas(width, height)
     const ctx = canvas.getContext('2d')
-
-    const background = await loadImage(backgroundUrl)
     ctx.drawImage(background, 0, 0, width, height)
 
-    const rowWidth = memberCount * SPRITE_SIZE
-    let x = (width - rowWidth) / 2
-    for (const member of members) {
+    let x = PADDING
+    for (const member of visibleMembers) {
         const source = member.sprite ? spriteSource(member.sprite) : undefined
+        const spriteY = height - PADDING - spriteSize
+        const nameY = spriteY - LINE_GAP - NAME_FONT_SIZE / 2
 
         const displayName = member.wowName?.trim() || member.username
         if (displayName) {
             ctx.textAlign = 'center'
             ctx.textBaseline = 'middle'
             ctx.fillStyle = '#ffffff'
-            const label = fitName(ctx, displayName, NAME_BOX_WIDTH)
-            ctx.fillText(label, x + SPRITE_SIZE / 2, PADDING + NAME_FONT_SIZE / 2)
+            const label = fitName(ctx, displayName, nameBoxWidth)
+            ctx.fillText(label, x + spriteSize / 2, nameY)
         }
 
-        const spriteY = PADDING + NAME_FONT_SIZE + LINE_GAP
         if (source) {
             try {
                 const sprite = await loadImage(source)
-                ctx.drawImage(sprite, x, spriteY, SPRITE_SIZE, SPRITE_SIZE)
+                ctx.drawImage(sprite, x, spriteY, spriteSize, spriteSize)
             } catch (error) {
                 // a broken sprite should never take the whole card down
                 console.error(`[Artwork] sprite ${member.sprite} failed:`, error)
             }
         }
 
-        x += SPRITE_SIZE + MEMBER_GAP
+        x += spriteSize + MEMBER_GAP
     }
 
     return canvas.toBuffer('image/png')

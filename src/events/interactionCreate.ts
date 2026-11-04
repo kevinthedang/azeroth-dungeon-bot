@@ -7,6 +7,19 @@ import commands from '../commands/index.js'
  * @param interaction the interaction received from the server
  */
 export default event(Events.InteractionCreate, async ({ log, client }, interaction) => {
+    if (interaction.isAutocomplete()) {
+        const command = commands.find(command => command.name === interaction.commandName)
+        if (!command?.autocomplete) return
+
+        try {
+            await command.autocomplete(client, interaction)
+        } catch (error) {
+            console.error(`[Command: ${command.name}] autocomplete failed`, error)
+            await interaction.respond([]).catch(() => null)
+        }
+        return
+    }
+
     if (!interaction.isChatInputCommand()) return
 
     log(`Interaction called '${interaction.commandName}' from ${interaction.user.tag}.`)
