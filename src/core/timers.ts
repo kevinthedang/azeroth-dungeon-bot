@@ -2,7 +2,7 @@ import { EmbedBuilder } from 'discord.js'
 import type { SQLOutputValue } from 'node:sqlite'
 import { db } from './db.js'
 import { isWowRole, WOW_ROLES, type WowRole } from './roles.js'
-import { isSpriteKey, resolveSpriteEmoji, type SpriteKey } from './sprites.js'
+import { isSpriteKey, type SpriteKey } from './sprites.js'
 import { getDungeonBackground, isRemoteUrl } from './backgrounds.js'
 import { EmbedColor } from '../utils/index.js'
 
@@ -341,8 +341,7 @@ function formatRoleList(members: RunMember[]): string {
     let shown = 0
 
     for (const member of sorted) {
-        const icon = resolveSpriteEmoji(member.sprite)
-        const entry = `${shown === 0 ? '' : '\n'}${icon} <@${member.userId}>`
+        const entry = `${shown === 0 ? '' : '\n'}<@${member.userId}>`
         const remainingAfter = sorted.length - shown - 1
         const suffix = remainingAfter > 0 ? `\n… (+${remainingAfter} more)` : ''
 
