@@ -9,6 +9,28 @@
 ## About
 A simple discord bot that takes the input of the people who are going on a raid and tracks how long it takes to go through a particular dungeon in WoW.
 
+## Discord Setup
+
+1. Create or select the bot application in the [Discord Developer Portal](https://discord.com/developers/applications).
+2. Open **Bot** and enable the required **Privileged Gateway Intents**:
+   - **Server Members Intent** is required for guild member lookups.
+   - **Message Content Intent** is required only if the bot will read and respond to regular text messages.
+3. Add the bot to the server with the `bot` and `applications.commands` scopes.
+4. Grant the bot the permissions it needs rather than Administrator:
+   - View Channels
+   - Send Messages
+   - Embed Links
+   - Attach Files
+   - Read Message History
+   - Use Application Commands
+5. Copy the application bot token into `.env`:
+
+```env
+CLIENT_TOKEN=your-bot-token
+```
+
+Do not commit the real token to source control. Restart the bot after changing the Developer Portal intent settings or `.env` token.
+
 ## Testing
 The test suite uses [Vitest](https://vitest.dev/) and never touches the real database or asset folders — each test file runs against an in-memory SQLite database and a temporary asset tree.
 
