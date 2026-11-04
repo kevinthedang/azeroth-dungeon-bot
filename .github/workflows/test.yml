@@ -4,7 +4,23 @@ on:
   push:
     branches:
       - master
+    paths:
+      - src/**
+      - tests/**
+      - assets/**
+      - package.json
+      - package-lock.json
+      - tsconfig.json
+      - .github/workflows/test.yml
   pull_request:
+    paths:
+      - src/**
+      - tests/**
+      - assets/**
+      - package.json
+      - package-lock.json
+      - tsconfig.json
+      - .github/workflows/test.yml
 
 jobs:
   test:
