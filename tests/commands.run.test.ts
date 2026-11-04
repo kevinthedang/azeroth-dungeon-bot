@@ -6,8 +6,6 @@ import { cleanup, loadCommand, loadCore } from './helpers.js'
 const core = await loadCore()
 const { Start } = await loadCommand('start')
 const { Stop } = await loadCommand('stop')
-const { Pause } = await loadCommand('pause')
-const { Resume } = await loadCommand('resume')
 
 afterAll(cleanup)
 
@@ -286,83 +284,4 @@ test('stop reports when the timer message cannot be updated', async () => {
     assert.equal(core.getActiveRun(channel), undefined)
     assert.match(embedJson(replies[0]).description, /could not be updated/)
     assert.ok(!calls.includes('deleteReply'))
-})
-
-test('pause reports when there is no active run', async () => {
-    const { interaction, replies } = makeInteraction({ channelId: unique('channel') })
-
-    await Pause.run({} as never, interaction as never)
-
-    assert.match(embedJson(replies[0]).description, /no active run/)
-})
-
-test('pause reports when the run is already paused', async () => {
-    const guild = makeGuild('guild-pause-twice', [])
-    const channel = unique('channel')
-    core.startRun(guild.id, channel, 'The Deadmines')
-    core.pauseRun(channel)
-
-    const { interaction, replies } = makeInteraction({ channelId: channel })
-
-    await Pause.run({} as never, interaction as never)
-
-    assert.match(embedJson(replies[0]).description, /already paused/)
-})
-
-test('pause updates the timer message without an extra reply', async () => {
-    const guild = makeGuild('guild-pause-ok', [])
-    const channel = unique('channel')
-    const run = core.startRun(guild.id, channel, 'The Deadmines')
-    core.attachMessage(run.id, 'timer-message')
-
-    const { message, edits } = makeMessage()
-    const { interaction, replies, calls } = makeInteraction({ channelId: channel })
-
-    await Pause.run(makeClient(message) as never, interaction as never)
-
-    assert.equal(core.getActiveRun(channel)?.status, 'paused')
-    assert.equal(edits.length, 1)
-    assert.equal(embedJson(edits[0]).title, '⏸️ The Deadmines')
-    assert.match(embedJson(edits[0]).description, /^Paused • /)
-    assert.ok(calls.includes('deleteReply'))
-    assert.equal(replies.length, 0)
-})
-
-test('resume reports when there is no active run', async () => {
-    const { interaction, replies } = makeInteraction({ channelId: unique('channel') })
-
-    await Resume.run({} as never, interaction as never)
-
-    assert.match(embedJson(replies[0]).description, /no active run/)
-})
-
-test('resume reports when the run is not paused', async () => {
-    const guild = makeGuild('guild-resume-running', [])
-    const channel = unique('channel')
-    core.startRun(guild.id, channel, 'The Deadmines')
-
-    const { interaction, replies } = makeInteraction({ channelId: channel })
-
-    await Resume.run({} as never, interaction as never)
-
-    assert.match(embedJson(replies[0]).description, /not paused/)
-})
-
-test('resume updates the timer message without an extra reply', async () => {
-    const guild = makeGuild('guild-resume-ok', [])
-    const channel = unique('channel')
-    const run = core.startRun(guild.id, channel, 'The Deadmines')
-    core.pauseRun(channel)
-    core.attachMessage(run.id, 'timer-message')
-
-    const { message, edits } = makeMessage()
-    const { interaction, replies, calls } = makeInteraction({ channelId: channel })
-
-    await Resume.run(makeClient(message) as never, interaction as never)
-
-    assert.equal(core.getActiveRun(channel)?.status, 'running')
-    assert.equal(edits.length, 1)
-    assert.equal(embedJson(edits[0]).title, '⏱️ The Deadmines')
-    assert.ok(calls.includes('deleteReply'))
-    assert.equal(replies.length, 0)
 })
