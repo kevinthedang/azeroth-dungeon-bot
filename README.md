@@ -1,6 +1,9 @@
 <div align="center">
     <h1>Azeroth Chronicle</h1>
     <h3>World of Warcraft Dungeon Tracking Discord Bot</h3>
+    <a href="https://github.com/kevinthedang/azeroth-chronicle-bot/actions/workflows/test.yml">
+        <img src="https://github.com/kevinthedang/azeroth-chronicle-bot/actions/workflows/test.yml/badge.svg" alt="Tests">
+    </a>
 </div>
 
 > [!NOTE]
