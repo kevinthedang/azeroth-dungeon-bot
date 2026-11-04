@@ -2,8 +2,8 @@ import { AttachmentBuilder, type Client, type Message } from 'discord.js'
 import { buildRunEmbed, getActiveRun, getActiveRuns, getPersonalBest, getRunMembers, type DungeonRun } from '../core/index.js'
 import { ART_FILENAME, renderRunArtBuffer } from './artwork.js'
 
-/** Discord allows roughly 5 edits per 5 seconds per channel, so 5s is safe. */
-const UPDATE_INTERVAL_MS = 5_000
+/** Refresh cadence for the live timer message (well under Discord's edit limit). */
+const UPDATE_INTERVAL_MS = 10_000
 
 let interval: NodeJS.Timeout | null = null
 let refreshing = false
