@@ -1,5 +1,6 @@
-import type { Client } from 'discord.js'
+import { AttachmentBuilder, type Client } from 'discord.js'
 import { buildRunEmbed, getPersonalBest, getRunMembers, type DungeonRun } from '../core/index.js'
+import { renderRunArtBuffer } from './artwork.js'
 
 export interface RunMessageOptions {
     bestMs?: number | null | undefined
@@ -28,6 +29,13 @@ export async function updateRunMessage(
         ? options.bestMs
         : getPersonalBest(run.guildId, run.dungeon, run.id)
 
+    const members = getRunMembers(run.id)
+
+    // the card normally rides along from `/start`; attach it here too when the
+    // message has no file yet so the final state still shows the art
+    const hasArt = message.attachments.size > 0
+    const art = hasArt ? null : await renderRunArtBuffer(run.dungeon, members)
+
     const edited = await message.edit({
         content: null,
         embeds: [
@@ -35,9 +43,11 @@ export async function updateRunMessage(
                 bestMs,
                 newPersonalBest: options.newPersonalBest,
                 firstRun: options.firstRun,
-                members: getRunMembers(run.id),
+                members,
+                suppressImage: hasArt || art !== null,
             }),
         ],
+        ...(art ? { files: [new AttachmentBuilder(art, { name: `run-${run.id}.png` })] } : {}),
         allowedMentions: { parse: [] },
     }).catch(() => null)
 

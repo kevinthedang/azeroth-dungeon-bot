@@ -2,6 +2,8 @@ import { EmbedBuilder } from 'discord.js'
 import type { SQLOutputValue } from 'node:sqlite'
 import { db } from './db.js'
 import { isWowRole, WOW_ROLES, type WowRole } from './roles.js'
+import { isSpriteKey, resolveSpriteEmoji, type SpriteKey } from './sprites.js'
+import { getDungeonBackground } from './backgrounds.js'
 import { EmbedColor } from '../utils/index.js'
 
 export type RunStatus = 'running' | 'paused' | 'finished' | 'cancelled'
@@ -11,6 +13,8 @@ export interface RunMember {
     username: string
     /** Current WoW role, resolved from player_roles when the run is loaded. */
     role?: WowRole | null
+    /** Character sprite chosen via /set-sprite, resolved from player_sprites. */
+    sprite?: SpriteKey | null
 }
 
 export interface DungeonRun {
@@ -40,11 +44,13 @@ const insertMemberStmt = db.prepare(`
 `)
 
 const selectMembersStmt = db.prepare(`
-    SELECT rm.user_id, rm.username, pr.role
+    SELECT rm.user_id, rm.username, r.guild_id, pr.role, ps.sprite
     FROM run_members rm
     JOIN runs r ON r.id = rm.run_id
     LEFT JOIN player_roles pr
         ON pr.guild_id = r.guild_id AND pr.user_id = rm.user_id
+    LEFT JOIN player_sprites ps
+        ON ps.guild_id = r.guild_id AND ps.user_id = rm.user_id
     WHERE rm.run_id = ?
     ORDER BY rm.rowid
 `)
@@ -181,11 +187,14 @@ export function getRunMembers(runId: number): RunMember[] {
     return selectMembersStmt.all(runId).map(row => {
         const rawRole = row.role
         const role = rawRole === null || rawRole === undefined ? null : String(rawRole)
+        const rawSprite = row.sprite
+        const sprite = rawSprite === null || rawSprite === undefined ? null : String(rawSprite)
 
         return {
             userId: String(row.user_id),
             username: String(row.username),
             role: role !== null && isWowRole(role) ? role : null,
+            sprite: sprite !== null && isSpriteKey(sprite) ? sprite : null,
         }
     })
 }
@@ -304,6 +313,11 @@ export interface RenderRunOptions {
     firstRun?: boolean | undefined
     /** Party members to list under the timer. */
     members?: RunMember[] | undefined
+    /**
+     * Skip the inline background image. Set when the run card is sent as a file
+     * attachment instead, so the art is not shown twice.
+     */
+    suppressImage?: boolean | undefined
 }
 
 const ROLE_ICONS: Record<WowRole, string> = {
@@ -321,7 +335,8 @@ function formatRoleList(members: RunMember[]): string {
     let shown = 0
 
     for (const member of sorted) {
-        const entry = `${shown === 0 ? '' : '\n'}<@${member.userId}>`
+        const icon = resolveSpriteEmoji(member.sprite)
+        const entry = `${shown === 0 ? '' : '\n'}${icon} <@${member.userId}>`
         const remainingAfter = sorted.length - shown - 1
         const suffix = remainingAfter > 0 ? `\n… (+${remainingAfter} more)` : ''
 
@@ -381,6 +396,7 @@ export function buildRunEmbed(
     const elapsed = formatElapsed(getElapsedMs(run, now))
     const best = options.bestMs != null ? formatElapsed(options.bestMs) : null
     const footer = [`run #${run.id}`]
+    const artUrl = options.suppressImage ? null : getDungeonBackground(run.dungeon)
 
     if (run.status === 'finished') {
         let color: number = EmbedColor.finished
@@ -407,6 +423,8 @@ export function buildRunEmbed(
             inline: true,
         })
 
+        if (artUrl) embed.setImage(artUrl)
+
         return embed.setFooter({ text: footer.join(' • ') })
     }
 
@@ -426,6 +444,8 @@ export function buildRunEmbed(
             inline: true,
         })
 
+        if (artUrl) embed.setImage(artUrl)
+
         return embed.setFooter({ text: footer.join(' • ') })
     }
 
@@ -443,6 +463,8 @@ export function buildRunEmbed(
         value: formatPacificTime(run.startedAt),
         inline: true,
     })
+
+    if (artUrl) embed.setImage(artUrl)
 
     return embed.setFooter({ text: footer.join(' • ') })
 }

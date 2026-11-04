@@ -1,3 +1,5 @@
+export * from './backgrounds.js'
 export * from './db.js'
 export * from './roles.js'
+export * from './sprites.js'
 export * from './timers.js'

@@ -3,7 +3,6 @@ import {
     ChatInputCommandInteraction,
     Client,
     MessageFlags,
-    PermissionFlagsBits,
 } from "discord.js";
 import { SlashCommand, errorEmbed, successEmbed } from "../utils/index.js";
 import { WOW_ROLES, isWowRole, setPlayerRole } from "../core/index.js";
@@ -50,13 +49,6 @@ export const SetRole: SlashCommand = {
 
             const targetUser = interaction.options.getUser('user') ?? interaction.user;
             const isSelf = targetUser.id === interaction.user.id;
-
-            if (!isSelf && !interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
-                await interaction.editReply({
-                    embeds: [errorEmbed('You need the **Manage Server** permission to set another member\'s role.')],
-                });
-                return;
-            }
 
             const targetMember = guild.members.cache.get(targetUser.id)
                 ?? await guild.members.fetch(targetUser.id).catch(() => null);

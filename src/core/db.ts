@@ -47,6 +47,16 @@ db.exec(`
         PRIMARY KEY (guild_id, user_id)
     );
 
+    -- kept separate from player_roles because a member can pick a sprite
+    -- before (or without) picking a role
+    CREATE TABLE IF NOT EXISTS player_sprites (
+        guild_id   TEXT    NOT NULL,
+        user_id    TEXT    NOT NULL,
+        sprite     TEXT    NOT NULL,
+        updated_at INTEGER NOT NULL,
+        PRIMARY KEY (guild_id, user_id)
+    );
+
     DROP INDEX IF EXISTS one_active_run;
 
     CREATE UNIQUE INDEX IF NOT EXISTS one_active_run

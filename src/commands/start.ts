@@ -1,5 +1,6 @@
 import {
     ApplicationCommandOptionType,
+    AttachmentBuilder,
     ChatInputCommandInteraction,
     Client,
 } from "discord.js";
@@ -14,6 +15,7 @@ import {
     startRun,
     type RunMember,
 } from "../core/index.js";
+import { renderRunArtBuffer } from "../services/index.js";
 
 export const Start: SlashCommand = {
     name: "start",
@@ -99,9 +101,22 @@ export const Start: SlashCommand = {
             const run = startRun(guild.id, interaction.channelId, dungeon, party);
             const members = getRunMembers(run.id);
 
-            // the interaction reply doubles as the live timer message
+            // render from the stored members so roles and sprites are included
+            const art = await renderRunArtBuffer(dungeon, members);
+
+            // the interaction reply doubles as the live timer message; the run
+            // card rides along as a file attachment so Discord keeps it large
             const message = await interaction.editReply({
-                embeds: [buildRunEmbed(run, Date.now(), { bestMs: personalBestMs, members })],
+                embeds: [
+                    buildRunEmbed(run, Date.now(), {
+                        bestMs: personalBestMs,
+                        members,
+                        suppressImage: art !== null,
+                    }),
+                ],
+                files: art
+                    ? [new AttachmentBuilder(art, { name: `run-${run.id}.png` })]
+                    : [],
                 allowedMentions: { parse: [] },
             });
             attachMessage(run.id, message.id);
@@ -111,5 +126,5 @@ export const Start: SlashCommand = {
                 embeds: [errorEmbed('An error occurred while starting the Dungeon Instance Timer.')],
             });
         }
-    }
+    },
 }
