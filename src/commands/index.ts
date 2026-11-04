@@ -1,6 +1,7 @@
 import { Clear } from "./clear.js";
 import { ClearName } from "./clearName.js";
 import { ClearSprite } from "./clearSprite.js";
+import { ExtraNote } from "./extraNote.js";
 import { SetName } from "./setName.js";
 import { SetRole } from "./setRole.js";
 import { SetSprite } from "./setSprite.js";
@@ -12,6 +13,7 @@ export default [
     Clear,
     ClearName,
     ClearSprite,
+    ExtraNote,
     SetName,
     SetRole,
     SetSprite,

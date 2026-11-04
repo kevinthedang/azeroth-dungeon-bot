@@ -43,6 +43,13 @@ db.exec(`
         PRIMARY KEY (run_id, user_id)
     );
 
+    CREATE TABLE IF NOT EXISTS run_notes (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        run_id     INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+        note       TEXT    NOT NULL,
+        created_at INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS player_roles (
         guild_id   TEXT    NOT NULL,
         user_id    TEXT    NOT NULL,

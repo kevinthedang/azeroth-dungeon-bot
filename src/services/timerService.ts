@@ -1,5 +1,5 @@
 import { AttachmentBuilder, type Client, type Message } from 'discord.js'
-import { buildRunEmbed, getActiveRun, getActiveRuns, getPersonalBest, getRunMembers, type DungeonRun } from '../core/index.js'
+import { buildRunEmbed, getActiveRun, getActiveRuns, getPersonalBest, getRunMembers, getRunNotes, type DungeonRun } from '../core/index.js'
 import { ART_FILENAME, renderRunArtBuffer } from './artwork.js'
 
 /** Refresh cadence for the live timer message (well under Discord's edit limit). */
@@ -78,6 +78,7 @@ async function refreshRun(client: Client, run: DungeonRun): Promise<void> {
 
         const bestMs = getPersonalBest(current.guildId, current.dungeon, current.id)
         const members = getRunMembers(current.id)
+        const notes = getRunNotes(current.id)
 
         // the card is attached once; later ticks only update the embed so we do
         // not re-upload the PNG every five seconds
@@ -95,6 +96,7 @@ async function refreshRun(client: Client, run: DungeonRun): Promise<void> {
                 buildRunEmbed(current, Date.now(), {
                     bestMs,
                     members,
+                    notes,
                     artUrl,
                 }),
             ],

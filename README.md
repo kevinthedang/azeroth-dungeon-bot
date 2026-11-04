@@ -19,6 +19,20 @@ npm run test:watch
 
 `AZEROTH_DB_PATH` and `AZEROTH_ASSETS_DIR` override the database and asset locations if you need to run the bot or tests against another checkout.
 
+## Slash Commands
+
+| Command | Options | Description |
+| --- | --- | --- |
+| `/start` | `dungeon` (required), `members` (required) | Starts the dungeon timer for the current channel and lists the party on the run card. `members` accepts comma-separated Discord usernames or mentions. |
+| `/stop` | — | Stops the active dungeon timer and updates the run card with the finished time. |
+| `/extra-note` | `text` (required) | Adds a note to the active run. Repeated calls append to the **Extra Notes** section on the timer card. |
+| `/set-name` | `name` (required), `user` (optional) | Sets the WoW character name shown on run cards for you or another server member. |
+| `/clear-name` | `user` (optional) | Clears a member's WoW character name, making the run card use their Discord name again. |
+| `/set-role` | `role` (required), `user` (optional) | Sets a WoW party role—Tank, Melee, Ranged, or Healer—for you or another server member. |
+| `/clear-sprite` | `user` (optional) | Clears the WoW character sprite for you or another server member. |
+| `/set-sprite` | `sprite` (required), `user` (optional) | Sets the character sprite shown on run cards for you or another server member. |
+| `/clear` | `dungeon` (required) | Requires **Manage Server** permission. Clears recorded completed and cancelled history for a dungeon without removing active runs. |
+
 ## Credit
 
 This is project has been licensed under the [MIT License](https://mit-license.org/) © 2026 by Kevin Dang

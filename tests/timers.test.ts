@@ -202,6 +202,16 @@ test('pauseRun and resumeRun do nothing without a matching run', () => {
     assert.equal(core.resumeRun(unique('channel')), null)
 })
 
+test('run notes are appended and stored per run', () => {
+    const channel = unique('channel')
+    const run = core.startRun(unique('guild'), channel, 'The Deadmines')
+
+    core.addRunNote(run.id, 'Bring a flask')
+    core.addRunNote(run.id, 'Need a healer')
+
+    assert.deepEqual(core.getRunNotes(run.id), ['Bring a flask', 'Need a healer'])
+})
+
 test('getElapsedMs excludes paused time', () => {
     const running = makeRun()
     assert.equal(core.getElapsedMs(running, STARTED_AT + 10_000), 10_000)

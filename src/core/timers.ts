@@ -75,6 +75,17 @@ const attachMessageStmt = db.prepare(`
     UPDATE runs SET message_id = ? WHERE id = ?
 `)
 
+const insertNoteStmt = db.prepare(`
+    INSERT INTO run_notes (run_id, note, created_at)
+    VALUES (?, ?, ?)
+`)
+
+const selectNotesStmt = db.prepare(`
+    SELECT note FROM run_notes
+    WHERE run_id = ?
+    ORDER BY id
+`)
+
 const finishRunStmt = db.prepare(`
     UPDATE runs
     SET ended_at = ?, paused_total = ?, paused_at = NULL, status = 'finished'
@@ -184,6 +195,16 @@ export function getActiveRuns(): DungeonRun[] {
 /** Remember which Discord message renders this run's live timer. */
 export function attachMessage(runId: number, messageId: string): void {
     attachMessageStmt.run(messageId, runId)
+}
+
+/** Append a note to a run. */
+export function addRunNote(runId: number, note: string): void {
+    insertNoteStmt.run(runId, note, Date.now())
+}
+
+/** Load notes for a run in the order they were added. */
+export function getRunNotes(runId: number): string[] {
+    return selectNotesStmt.all(runId).map(row => String(row.note))
 }
 
 /** Load the party recorded for a run, in the order they were added. */
@@ -319,6 +340,8 @@ export interface RenderRunOptions {
     firstRun?: boolean | undefined
     /** Party members to list under the timer. */
     members?: RunMember[] | undefined
+    /** Notes appended through /extra-note, in insertion order. */
+    notes?: string[] | undefined
     /**
      * Image for the embed, normally `attachment://run-card.png`. `null` hides
      * the image; `undefined` falls back to the dungeon background.
@@ -392,6 +415,26 @@ function addPartyFields(embed: EmbedBuilder, members: RunMember[]): void {
     }
 }
 
+/** Add notes after the party columns, before the run card image. */
+function addNotesField(embed: EmbedBuilder, notes: string[]): void {
+    const lines: string[] = []
+    let length = 0
+    let omitted = 0
+
+    for (const note of notes) {
+        const line = `• ${note}`
+        if (length + line.length + 1 > 1024) {
+            omitted++
+            continue
+        }
+        lines.push(line)
+        length += line.length + 1
+    }
+
+    if (omitted > 0) lines.push(`… (+${omitted} more)`)
+    embed.addFields({ name: '📝 Extra Notes', value: lines.join('\n') })
+}
+
 /** Build the embed that renders a run's timer. */
 export function buildRunEmbed(
     run: DungeonRun,
@@ -434,6 +477,7 @@ export function buildRunEmbed(
             .setDescription(`Finished in \`${elapsed}\``)
 
         if (options.members?.length) addPartyFields(embed, options.members)
+        if (options.notes?.length) addNotesField(embed, options.notes)
 
         return finish(embed)
     }
@@ -447,6 +491,7 @@ export function buildRunEmbed(
             .setDescription(`Paused • \`${elapsed}\``)
 
         if (options.members?.length) addPartyFields(embed, options.members)
+        if (options.notes?.length) addNotesField(embed, options.notes)
 
         return finish(embed)
     }
@@ -459,6 +504,7 @@ export function buildRunEmbed(
         .setDescription(`\`${elapsed}\``)
 
     if (options.members?.length) addPartyFields(embed, options.members)
+    if (options.notes?.length) addNotesField(embed, options.notes)
 
     return finish(embed)
 }

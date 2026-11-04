@@ -6,6 +6,7 @@ import { cleanup, loadCommand, loadCore } from './helpers.js'
 const core = await loadCore()
 const { Start } = await loadCommand('start')
 const { Stop } = await loadCommand('stop')
+const { ExtraNote } = await loadCommand('extraNote')
 
 afterAll(cleanup)
 
@@ -284,4 +285,44 @@ test('stop reports when the timer message cannot be updated', async () => {
     assert.equal(core.getActiveRun(channel), undefined)
     assert.match(embedJson(replies[0]).description, /could not be updated/)
     assert.ok(!calls.includes('deleteReply'))
+})
+
+test('extra-note reports when there is no active run', async () => {
+    const { interaction, replies } = makeInteraction({
+        channelId: unique('channel'),
+        strings: { text: 'Bring a flask' },
+    })
+
+    await ExtraNote.run({} as never, interaction as never)
+
+    assert.match(embedJson(replies[0]).description, /no active run/)
+})
+
+test('extra-note appends notes and updates the timer embed', async () => {
+    const guild = makeGuild('guild-extra-note', [])
+    const channel = unique('channel')
+    const run = core.startRun(guild.id, channel, 'The Deadmines')
+    core.attachMessage(run.id, 'timer-message')
+
+    const { message, edits } = makeMessage()
+    const first = makeInteraction({
+        channelId: channel,
+        strings: { text: 'Bring a flask' },
+    })
+    await ExtraNote.run(makeClient(message) as never, first.interaction as never)
+
+    const second = makeInteraction({
+        channelId: channel,
+        strings: { text: 'Need a healer' },
+    })
+    await ExtraNote.run(makeClient(message) as never, second.interaction as never)
+
+    assert.deepEqual(core.getRunNotes(run.id), ['Bring a flask', 'Need a healer'])
+    assert.equal(edits.length, 2)
+
+    const json = embedJson(edits[1])
+    const notesField = json.fields.find((field: { name: string }) => field.name === '📝 Extra Notes')
+    assert.equal(notesField.value, '• Bring a flask\n• Need a healer')
+    assert.equal(first.calls.includes('deleteReply'), true)
+    assert.equal(second.calls.includes('deleteReply'), true)
 })
