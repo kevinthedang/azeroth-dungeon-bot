@@ -10,8 +10,16 @@ import { resolve } from 'node:path'
  *   2. an entry registered with `setDungeonBackground` (hosted URL)
  *   3. `assets/backgrounds/default.png`
  */
-const BACKGROUND_DIR = resolve(process.cwd(), 'assets', 'backgrounds')
 const DEFAULT_BACKGROUND = 'default'
+
+/** Asset root, resolved per call so tests can point at a temporary directory. */
+export function assetsDir(): string {
+    return process.env.AZEROTH_ASSETS_DIR || resolve(process.cwd(), 'assets')
+}
+
+function backgroundDir(): string {
+    return resolve(assetsDir(), 'backgrounds')
+}
 
 const DUNGEON_BACKGROUNDS: Record<string, string> = {
     // The Deadmines — uploaded as the `sp_art_the_deadmines` emoji
@@ -31,7 +39,7 @@ export function slugifyDungeonName(dungeon: string): string {
 function localBackground(slug: string): string | undefined {
     if (!slug) return undefined
 
-    const file = resolve(BACKGROUND_DIR, `${slug}.png`)
+    const file = resolve(backgroundDir(), `${slug}.png`)
     return existsSync(file) ? file : undefined
 }
 

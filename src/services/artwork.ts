@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createCanvas, loadImage } from '@napi-rs/canvas'
-import { getDungeonBackground, getSpriteUrl, isSpriteKey } from '../core/index.js'
+import { assetsDir, getDungeonBackground, getSpriteUrl, isSpriteKey } from '../core/index.js'
 import type { RunMember } from '../core/index.js'
 
 const WIDTH = 1100
@@ -66,7 +66,7 @@ function spriteSource(key: string): string | undefined {
     const uploaded = getSpriteUrl(key)
     if (uploaded) return uploaded
 
-    const local = resolve(process.cwd(), 'assets', 'sprites', `${key}.png`)
+    const local = resolve(assetsDir(), 'sprites', `${key}.png`)
     return existsSync(local) ? local : undefined
 }
 

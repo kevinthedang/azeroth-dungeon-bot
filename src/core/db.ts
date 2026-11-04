@@ -2,9 +2,13 @@ import { mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-// store the database next to the project, regardless of how the bot is launched
-const databasePath = resolve(process.cwd(), 'data', 'azeroth.db')
-mkdirSync(dirname(databasePath), { recursive: true })
+// store the database next to the project, regardless of how the bot is launched.
+// `AZEROTH_DB_PATH` lets the test suite (or a deployment) point somewhere else;
+// `:memory:` keeps a throwaway database entirely in RAM.
+const databasePath =
+    process.env.AZEROTH_DB_PATH || resolve(process.cwd(), 'data', 'azeroth.db')
+
+if (databasePath !== ':memory:') mkdirSync(dirname(databasePath), { recursive: true })
 
 /**
  * Shared SQLite connection. `node:sqlite` is built into Node >= 22.5,
