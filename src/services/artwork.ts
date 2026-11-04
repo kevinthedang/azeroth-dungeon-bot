@@ -4,7 +4,7 @@ import { createCanvas, loadImage } from '@napi-rs/canvas'
 import { getDungeonBackground, getSpriteUrl, isSpriteKey } from '../core/index.js'
 import type { RunMember } from '../core/index.js'
 
-const WIDTH = 1280
+const WIDTH = 1100
 const PADDING = 64
 const SPRITE_SIZE = 256
 const NAME_FONT_SIZE = 48
@@ -16,6 +16,9 @@ const NAME_BOX_WIDTH = SPRITE_SIZE - MEMBER_GAP
 const NAME_MIN_FONT_SIZE = 20
 
 const MAX_CACHED_ART = 32
+
+/** File name used when the run card is attached to a message. */
+export const ART_FILENAME = 'run-card.png'
 
 interface TextMeasurer {
     font: string
@@ -127,7 +130,7 @@ export async function renderRunArtBuffer(dungeon: string, members: RunMember[]):
     const backgroundUrl = getDungeonBackground(dungeon)
     if (!backgroundUrl) return null
 
-    const key = `${dungeon}|${members
+    const key = `${backgroundUrl}|${dungeon}|${members
         .map(member => `${member.userId}:${member.wowName ?? member.username}:${member.sprite ?? ''}`)
         .sort()
         .join(',')}`

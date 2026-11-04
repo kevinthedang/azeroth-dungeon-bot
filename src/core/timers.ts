@@ -3,7 +3,7 @@ import type { SQLOutputValue } from 'node:sqlite'
 import { db } from './db.js'
 import { isWowRole, WOW_ROLES, type WowRole } from './roles.js'
 import { isSpriteKey, resolveSpriteEmoji, type SpriteKey } from './sprites.js'
-import { getDungeonBackground } from './backgrounds.js'
+import { getDungeonBackground, isRemoteUrl } from './backgrounds.js'
 import { EmbedColor } from '../utils/index.js'
 
 export type RunStatus = 'running' | 'paused' | 'finished' | 'cancelled'
@@ -320,10 +320,10 @@ export interface RenderRunOptions {
     /** Party members to list under the timer. */
     members?: RunMember[] | undefined
     /**
-     * Skip the inline background image. Set when the run card is sent as a file
-     * attachment instead, so the art is not shown twice.
+     * Image for the embed, normally `attachment://run-card.png`. `null` hides
+     * the image; `undefined` falls back to the dungeon background.
      */
-    suppressImage?: boolean | undefined
+    artUrl?: string | null | undefined
 }
 
 const ROLE_ICONS: Record<WowRole, string> = {
@@ -401,8 +401,21 @@ export function buildRunEmbed(
 ): EmbedBuilder {
     const elapsed = formatElapsed(getElapsedMs(run, now))
     const best = options.bestMs != null ? formatElapsed(options.bestMs) : null
-    const footer = [`run #${run.id}`]
-    const artUrl = options.suppressImage ? null : getDungeonBackground(run.dungeon)
+    // Started and the personal best live in the footer so the run card image
+    // can sit above them — embeds always render fields before the image.
+    const footer = [`Started ${formatPacificTime(run.startedAt)}`]
+    // only hosted URLs can be used as an embed image; local background files
+    // are rendered into the attached run card instead
+    const background = getDungeonBackground(run.dungeon)
+    const fallbackImage = background && isRemoteUrl(background) ? background : null
+    const imageUrl = options.artUrl !== undefined ? options.artUrl : fallbackImage
+
+    const finish = (embed: EmbedBuilder): EmbedBuilder => {
+        footer.push(`run #${run.id}`)
+        if (imageUrl) embed.setImage(imageUrl)
+
+        return embed.setFooter({ text: footer.join(' • ') })
+    }
 
     if (run.status === 'finished') {
         let color: number = EmbedColor.finished
@@ -423,15 +436,7 @@ export function buildRunEmbed(
 
         if (options.members?.length) addPartyFields(embed, options.members)
 
-        embed.addFields({
-            name: 'Started',
-            value: formatPacificTime(run.startedAt),
-            inline: true,
-        })
-
-        if (artUrl) embed.setImage(artUrl)
-
-        return embed.setFooter({ text: footer.join(' • ') })
+        return finish(embed)
     }
 
     if (run.status === 'paused') {
@@ -444,15 +449,7 @@ export function buildRunEmbed(
 
         if (options.members?.length) addPartyFields(embed, options.members)
 
-        embed.addFields({
-            name: 'Started',
-            value: formatPacificTime(run.startedAt),
-            inline: true,
-        })
-
-        if (artUrl) embed.setImage(artUrl)
-
-        return embed.setFooter({ text: footer.join(' • ') })
+        return finish(embed)
     }
 
     if (best) footer.push(`PB ${best}`)
@@ -464,13 +461,5 @@ export function buildRunEmbed(
 
     if (options.members?.length) addPartyFields(embed, options.members)
 
-    embed.addFields({
-        name: 'Started',
-        value: formatPacificTime(run.startedAt),
-        inline: true,
-    })
-
-    if (artUrl) embed.setImage(artUrl)
-
-    return embed.setFooter({ text: footer.join(' • ') })
+    return finish(embed)
 }

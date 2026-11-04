@@ -1,6 +1,6 @@
 import { AttachmentBuilder, type Client, type Message } from 'discord.js'
 import { buildRunEmbed, getActiveRun, getActiveRuns, getPersonalBest, getRunMembers, type DungeonRun } from '../core/index.js'
-import { renderRunArtBuffer } from './artwork.js'
+import { ART_FILENAME, renderRunArtBuffer } from './artwork.js'
 
 /** Discord allows roughly 5 edits per 5 seconds per channel, so 5s is safe. */
 const UPDATE_INTERVAL_MS = 5_000
@@ -79,10 +79,15 @@ async function refreshRun(client: Client, run: DungeonRun): Promise<void> {
         const bestMs = getPersonalBest(current.guildId, current.dungeon, current.id)
         const members = getRunMembers(current.id)
 
-        // the run card is attached once; later ticks only update the embed so we
-        // do not re-upload the PNG every five seconds
-        const hasArt = message.attachments.size > 0
-        const art = hasArt ? null : await renderRunArtBuffer(current.dungeon, members)
+        // the card is attached once; later ticks only update the embed so we do
+        // not re-upload the PNG every five seconds
+        const existingArt = message.attachments.first()?.name
+        const art = existingArt ? null : await renderRunArtBuffer(current.dungeon, members)
+        const artUrl = existingArt
+            ? `attachment://${existingArt}`
+            : art
+                ? `attachment://${ART_FILENAME}`
+                : null
 
         const edited = await message.edit({
             content: null,
@@ -90,10 +95,10 @@ async function refreshRun(client: Client, run: DungeonRun): Promise<void> {
                 buildRunEmbed(current, Date.now(), {
                     bestMs,
                     members,
-                    suppressImage: hasArt || art !== null,
+                    artUrl,
                 }),
             ],
-            ...(art ? { files: [new AttachmentBuilder(art, { name: `run-${current.id}.png` })] } : {}),
+            ...(art ? { files: [new AttachmentBuilder(art, { name: ART_FILENAME })] } : {}),
             allowedMentions: { parse: [] },
         })
 

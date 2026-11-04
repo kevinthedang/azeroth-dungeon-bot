@@ -15,7 +15,7 @@ import {
     startRun,
     type RunMember,
 } from "../core/index.js";
-import { renderRunArtBuffer } from "../services/index.js";
+import { ART_FILENAME, renderRunArtBuffer } from "../services/index.js";
 
 export const Start: SlashCommand = {
     name: "start",
@@ -104,19 +104,17 @@ export const Start: SlashCommand = {
             // render from the stored members so roles and sprites are included
             const art = await renderRunArtBuffer(dungeon, members);
 
-            // the interaction reply doubles as the live timer message; the run
-            // card rides along as a file attachment so Discord keeps it large
+            // the card rides along as a file but is referenced from inside the
+            // embed, so it shows in the embed (and is hidden as an attachment)
             const message = await interaction.editReply({
                 embeds: [
                     buildRunEmbed(run, Date.now(), {
                         bestMs: personalBestMs,
                         members,
-                        suppressImage: art !== null,
+                        artUrl: art ? `attachment://${ART_FILENAME}` : null,
                     }),
                 ],
-                files: art
-                    ? [new AttachmentBuilder(art, { name: `run-${run.id}.png` })]
-                    : [],
+                files: art ? [new AttachmentBuilder(art, { name: ART_FILENAME })] : [],
                 allowedMentions: { parse: [] },
             });
             attachMessage(run.id, message.id);
