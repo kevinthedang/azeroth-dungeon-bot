@@ -87,11 +87,12 @@ export async function renderRunArt(backgroundUrl: string, members: RunMember[]):
     for (const member of members) {
         const source = member.sprite ? spriteSource(member.sprite) : undefined
 
-        if (member.username) {
+        const displayName = member.wowName?.trim() || member.username
+        if (displayName) {
             ctx.textAlign = 'center'
             ctx.textBaseline = 'middle'
             ctx.fillStyle = '#ffffff'
-            const label = fitName(ctx, member.username, NAME_BOX_WIDTH)
+            const label = fitName(ctx, displayName, NAME_BOX_WIDTH)
             ctx.fillText(label, x + SPRITE_SIZE / 2, PADDING + NAME_FONT_SIZE / 2)
         }
 
@@ -127,7 +128,7 @@ export async function renderRunArtBuffer(dungeon: string, members: RunMember[]):
     if (!backgroundUrl) return null
 
     const key = `${dungeon}|${members
-        .map(member => `${member.userId}:${member.username}:${member.sprite ?? ''}`)
+        .map(member => `${member.userId}:${member.wowName ?? member.username}:${member.sprite ?? ''}`)
         .sort()
         .join(',')}`
 

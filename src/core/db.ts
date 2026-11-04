@@ -57,6 +57,15 @@ db.exec(`
         PRIMARY KEY (guild_id, user_id)
     );
 
+    -- WoW character name shown on the run card instead of the Discord name
+    CREATE TABLE IF NOT EXISTS player_names (
+        guild_id   TEXT    NOT NULL,
+        user_id    TEXT    NOT NULL,
+        name       TEXT    NOT NULL,
+        updated_at INTEGER NOT NULL,
+        PRIMARY KEY (guild_id, user_id)
+    );
+
     DROP INDEX IF EXISTS one_active_run;
 
     CREATE UNIQUE INDEX IF NOT EXISTS one_active_run

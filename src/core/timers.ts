@@ -11,6 +11,8 @@ export type RunStatus = 'running' | 'paused' | 'finished' | 'cancelled'
 export interface RunMember {
     userId: string
     username: string
+    /** WoW character name from /set-name, or `null` to fall back to `username`. */
+    wowName?: string | null
     /** Current WoW role, resolved from player_roles when the run is loaded. */
     role?: WowRole | null
     /** Character sprite chosen via /set-sprite, resolved from player_sprites. */
@@ -44,13 +46,15 @@ const insertMemberStmt = db.prepare(`
 `)
 
 const selectMembersStmt = db.prepare(`
-    SELECT rm.user_id, rm.username, r.guild_id, pr.role, ps.sprite
+    SELECT rm.user_id, rm.username, r.guild_id, pr.role, ps.sprite, pn.name AS wow_name
     FROM run_members rm
     JOIN runs r ON r.id = rm.run_id
     LEFT JOIN player_roles pr
         ON pr.guild_id = r.guild_id AND pr.user_id = rm.user_id
     LEFT JOIN player_sprites ps
         ON ps.guild_id = r.guild_id AND ps.user_id = rm.user_id
+    LEFT JOIN player_names pn
+        ON pn.guild_id = r.guild_id AND pn.user_id = rm.user_id
     WHERE rm.run_id = ?
     ORDER BY rm.rowid
 `)
@@ -189,10 +193,12 @@ export function getRunMembers(runId: number): RunMember[] {
         const role = rawRole === null || rawRole === undefined ? null : String(rawRole)
         const rawSprite = row.sprite
         const sprite = rawSprite === null || rawSprite === undefined ? null : String(rawSprite)
+        const rawName = row.wow_name
 
         return {
             userId: String(row.user_id),
             username: String(row.username),
+            wowName: rawName === null || rawName === undefined ? null : String(rawName),
             role: role !== null && isWowRole(role) ? role : null,
             sprite: sprite !== null && isSpriteKey(sprite) ? sprite : null,
         }
