@@ -212,6 +212,27 @@ test('run notes are appended and stored per run', () => {
     assert.deepEqual(core.getRunNotes(run.id), ['Bring a flask', 'Need a healer'])
 })
 
+test('run drops are stored with vendored and party recipient state', () => {
+    const channel = unique('channel')
+    const run = core.startRun(
+        unique('guild'),
+        channel,
+        'The Deadmines',
+        [{ userId: 'member-1', username: 'alice' }],
+    )
+
+    core.addRunDrop(run.id, 'Old Belt', true)
+    core.addRunDrop(run.id, 'Ruby Ring', false, {
+        userId: 'member-1',
+        username: 'alice',
+    })
+
+    assert.deepEqual(core.getRunDrops(run.id), [
+        { item: 'Old Belt', vendored: true, memberId: null, memberName: null },
+        { item: 'Ruby Ring', vendored: false, memberId: 'member-1', memberName: 'alice' },
+    ])
+})
+
 test('getElapsedMs excludes paused time', () => {
     const running = makeRun()
     assert.equal(core.getElapsedMs(running, STARTED_AT + 10_000), 10_000)

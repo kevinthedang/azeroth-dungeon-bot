@@ -51,6 +51,7 @@ const commandLoaders = {
     clear: () => import('../src/commands/clear.js'),
     clearName: () => import('../src/commands/clearName.js'),
     clearSprite: () => import('../src/commands/clearSprite.js'),
+    drop: () => import('../src/commands/drop.js'),
     extraNote: () => import('../src/commands/extraNote.js'),
     setRole: () => import('../src/commands/setRole.js'),
     setName: () => import('../src/commands/setName.js'),

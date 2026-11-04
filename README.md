@@ -26,6 +26,7 @@ npm run test:watch
 | `/start` | `dungeon` (required), `members` (required) | Starts the dungeon timer for the current channel and lists the party on the run card. `members` accepts comma-separated Discord usernames or mentions. |
 | `/stop` | — | Stops the active dungeon timer and updates the run card with the finished time. |
 | `/extra-note` | `text` (required) | Adds a note to the active run. Repeated calls append to the **Extra Notes** section on the timer card. |
+| `/drop` | `item` (required), `vendored` (required), `member` (required when not vendored) | Records a dropped item. Vendored drops are marked as vendored; otherwise, the command records which active-run party member received the item. |
 | `/set-name` | `name` (required), `user` (optional) | Sets the WoW character name shown on run cards for you or another server member. |
 | `/clear-name` | `user` (optional) | Clears a member's WoW character name, making the run card use their Discord name again. |
 | `/set-role` | `role` (required), `user` (optional) | Sets a WoW party role—Tank, Melee, Ranged, or Healer—for you or another server member. |

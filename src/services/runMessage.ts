@@ -1,5 +1,5 @@
 import { AttachmentBuilder, type Client } from 'discord.js'
-import { buildRunEmbed, getPersonalBest, getRunMembers, getRunNotes, type DungeonRun } from '../core/index.js'
+import { buildRunEmbed, getPersonalBest, getRunMembers, getRunNotes, getRunDrops, type DungeonRun } from '../core/index.js'
 import { ART_FILENAME, renderRunArtBuffer } from './artwork.js'
 
 export interface RunMessageOptions {
@@ -31,6 +31,7 @@ export async function updateRunMessage(
 
     const members = getRunMembers(run.id)
     const notes = getRunNotes(run.id)
+    const drops = getRunDrops(run.id)
 
     // the card normally rides along from `/start`; attach it here too when the
     // message has no file yet so the final state still shows the art
@@ -51,6 +52,7 @@ export async function updateRunMessage(
                 firstRun: options.firstRun,
                 members,
                 notes,
+                drops,
                 artUrl,
             }),
         ],

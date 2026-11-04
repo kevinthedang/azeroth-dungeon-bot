@@ -50,6 +50,16 @@ db.exec(`
         created_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS run_drops (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        run_id      INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+        item        TEXT    NOT NULL,
+        vendored    INTEGER NOT NULL DEFAULT 0,
+        member_id   TEXT,
+        member_name TEXT,
+        created_at  INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS player_roles (
         guild_id   TEXT    NOT NULL,
         user_id    TEXT    NOT NULL,

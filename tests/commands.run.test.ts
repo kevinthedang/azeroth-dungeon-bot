@@ -7,6 +7,7 @@ const core = await loadCore()
 const { Start } = await loadCommand('start')
 const { Stop } = await loadCommand('stop')
 const { ExtraNote } = await loadCommand('extraNote')
+const { Drop } = await loadCommand('drop')
 
 afterAll(cleanup)
 
@@ -51,6 +52,8 @@ function makeInteraction(options: {
     user?: ReturnType<typeof makeUser>
     channelId?: string
     strings?: Record<string, string>
+    booleans?: Record<string, boolean>
+    userOption?: ReturnType<typeof makeUser> | null
 } = {}) {
     const guild = options.guild === undefined ? makeGuild('guild-default') : options.guild
     const user = options.user ?? makeUser('self')
@@ -65,7 +68,8 @@ function makeInteraction(options: {
         memberPermissions: null,
         options: {
             getString: (name: string) => options.strings?.[name] ?? null,
-            getUser: () => null,
+            getBoolean: (name: string) => options.booleans?.[name] ?? null,
+            getUser: () => options.userOption ?? null,
         },
         deferReply: async () => {
             calls.push('deferReply')
@@ -325,4 +329,56 @@ test('extra-note appends notes and updates the timer embed', async () => {
     assert.equal(notesField.value, '• Bring a flask\n• Need a healer')
     assert.equal(first.calls.includes('deleteReply'), true)
     assert.equal(second.calls.includes('deleteReply'), true)
+})
+
+test('drop requires a party member when not vendored', async () => {
+    const channel = unique('channel')
+    core.startRun(unique('guild'), channel, 'The Deadmines')
+
+    const { interaction, replies } = makeInteraction({
+        channelId: channel,
+        strings: { item: 'Ruby Ring' },
+        booleans: { vendored: false },
+    })
+
+    await Drop.run({} as never, interaction as never)
+
+    assert.match(embedJson(replies[0]).description, /party member/)
+})
+
+test('drop records a vendored item and non-vendored party allocation', async () => {
+    const channel = unique('channel')
+    const run = core.startRun(
+        unique('guild'),
+        channel,
+        'The Deadmines',
+        [{ userId: 'member-1', username: 'alice' }],
+    )
+    core.attachMessage(run.id, 'timer-message')
+
+    const { message, edits } = makeMessage()
+    const vendored = makeInteraction({
+        channelId: channel,
+        strings: { item: 'Old Belt' },
+        booleans: { vendored: true },
+    })
+    await Drop.run(makeClient(message) as never, vendored.interaction as never)
+
+    const allocated = makeInteraction({
+        channelId: channel,
+        strings: { item: 'Ruby Ring' },
+        booleans: { vendored: false },
+        userOption: makeUser('member-1', 'alice'),
+    })
+    await Drop.run(makeClient(message) as never, allocated.interaction as never)
+
+    assert.deepEqual(core.getRunDrops(run.id), [
+        { item: 'Old Belt', vendored: true, memberId: null, memberName: null },
+        { item: 'Ruby Ring', vendored: false, memberId: 'member-1', memberName: 'alice' },
+    ])
+    assert.equal(edits.length, 2)
+
+    const json = embedJson(edits[1])
+    const dropsField = json.fields.find((field: { name: string }) => field.name === '📦 Drops')
+    assert.equal(dropsField.value, '• Old Belt — Vendored\n• Ruby Ring — <@member-1>')
 })
