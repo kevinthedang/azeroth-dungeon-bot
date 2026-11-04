@@ -34,6 +34,10 @@ CLIENT_TOKEN=your-bot-token
 
 Do not commit the real token to source control. Restart the bot after changing the Developer Portal intent settings or `.env` token.
 
+## Deployment
+
+Pushing to `master` runs the GitHub Actions test workflow but does not deploy the bot automatically. See [.github/DEPLOYMENT.md](.github/DEPLOYMENT.md) for Raspberry Pi and systemd setup.
+
 ## Testing
 The test suite uses [Vitest](https://vitest.dev/) and never touches the real database or asset folders — each test file runs against an in-memory SQLite database and a temporary asset tree.
 
