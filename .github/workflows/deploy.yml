@@ -180,7 +180,10 @@ jobs:
             ${SSH} "umask 077 && cat > '${DEPLOY_PATH}/.env'"
 
           # Install and build on the Pi itself.
-          ${SSH} "cd '${DEPLOY_PATH}' && npm ci && npm run build"
+          ${SSH} "export PATH=/usr/local/bin:/usr/bin:/bin:\${PATH}; \
+            cd '${DEPLOY_PATH}' && \
+            command -v node >/dev/null && command -v npm >/dev/null && \
+            node --version && npm ci && npm run build"
 
           # Restart only after a successful build, then confirm it is running.
           ${SSH} "sudo -n systemctl restart '${DEPLOY_SERVICE}'"

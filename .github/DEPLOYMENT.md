@@ -276,6 +276,15 @@ tar -czf azeroth-chronicle-backup.tgz \
 - **`rsync: command not found`** — install `rsync` on the Pi.
 - **`npm ci` fails on the Pi** — confirm the Pi has Node 24 and 64-bit
   Raspberry Pi OS; native `@napi-rs/canvas` binaries are architecture-specific.
+- **`npm: command not found` during deployment** — non-interactive SSH sessions
+  may not load the Pi user's shell profile. Verify `node` and `npm` are installed
+  at a standard system path:
+  ```bash
+  command -v node
+  command -v npm
+  node --version
+  npm --version
+  ```
 - **Deploy did not run** — the `Deploy` workflow only runs after the `Test`
   workflow succeeds for a push to `master`. A push that only touches files
   outside `test.yml`'s path filters will not trigger it.
