@@ -163,10 +163,14 @@ jobs:
           SSH="ssh -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST}"
           TARGET="${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
 
+          echo "Checking SSH access..."
+          ${SSH} "echo 'SSH connection successful'"
+
           # Copy the source tree. data/ and .env are excluded so the live
           # SQLite database and token on the Pi are never overwritten or
           # deleted. node_modules is rebuilt on the Pi so native modules
           # (@napi-rs/canvas) match the Pi's CPU architecture.
+          echo "Syncing files to the Pi..."
           rsync -az --delete \
             --exclude '.git' \
             --exclude 'node_modules' \
@@ -176,15 +180,19 @@ jobs:
             ./ "${TARGET}"
 
           # Write the token to the Pi without exposing it in the process list.
+          echo "Updating the Pi environment file..."
           printf 'CLIENT_TOKEN=%s\n' "${CLIENT_TOKEN}" |
             ${SSH} "umask 077 && cat > '${DEPLOY_PATH}/.env'"
 
           # Install and build on the Pi itself.
+          echo "Installing dependencies and building on the Pi..."
           ${SSH} "export PATH=/usr/local/bin:/usr/bin:/bin:\${PATH}; \
             cd '${DEPLOY_PATH}' && \
             command -v node >/dev/null && command -v npm >/dev/null && \
             node --version && npm ci && npm run build"
 
           # Restart only after a successful build, then confirm it is running.
+          echo "Restarting the bot service..."
           ${SSH} "sudo -n systemctl restart '${DEPLOY_SERVICE}'"
+          echo "Confirming the bot service is active..."
           ${SSH} "systemctl is-active --quiet '${DEPLOY_SERVICE}'"
