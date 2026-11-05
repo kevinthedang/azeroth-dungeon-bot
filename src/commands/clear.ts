@@ -1,5 +1,6 @@
 import {
     ApplicationCommandOptionType,
+    type AutocompleteInteraction,
     ChatInputCommandInteraction,
     Client,
     MessageFlags,
@@ -18,9 +19,19 @@ export const Clear: SlashCommand = {
             name: "dungeon",
             description: "Name of the dungeon whose history should be cleared",
             required: true,
-            choices: DUNGEONS.map(dungeon => ({ name: dungeon, value: dungeon })),
+            autocomplete: true,
         },
     ],
+
+    autocomplete: async (_client: Client, interaction: AutocompleteInteraction) => {
+        const query = interaction.options.getFocused().toLowerCase()
+        const matches = DUNGEONS
+            .filter(dungeon => dungeon.toLowerCase().includes(query))
+            .slice(0, 25)
+            .map(dungeon => ({ name: dungeon, value: dungeon }))
+
+        await interaction.respond(matches)
+    },
 
     run: async (client: Client, interaction: ChatInputCommandInteraction) => {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });

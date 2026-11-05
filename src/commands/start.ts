@@ -1,6 +1,7 @@
 import {
     ApplicationCommandOptionType,
     AttachmentBuilder,
+    type AutocompleteInteraction,
     ChatInputCommandInteraction,
     Client,
 } from "discord.js";
@@ -28,7 +29,7 @@ export const Start: SlashCommand = {
             name: "dungeon",
             description: "Dungeon being run",
             required: true,
-            choices: DUNGEONS.map(dungeon => ({ name: dungeon, value: dungeon })),
+            autocomplete: true,
         },
         {
             type: ApplicationCommandOptionType.String,
@@ -38,6 +39,16 @@ export const Start: SlashCommand = {
             max_length: 1000,
         },
     ],
+
+    autocomplete: async (_client: Client, interaction: AutocompleteInteraction) => {
+        const query = interaction.options.getFocused().toLowerCase()
+        const matches = DUNGEONS
+            .filter(dungeon => dungeon.toLowerCase().includes(query))
+            .slice(0, 25)
+            .map(dungeon => ({ name: dungeon, value: dungeon }))
+
+        await interaction.respond(matches)
+    },
 
     run: async (client: Client, interaction: ChatInputCommandInteraction) => {
         await interaction.deferReply();

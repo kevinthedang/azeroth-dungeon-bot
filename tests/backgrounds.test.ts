@@ -23,6 +23,23 @@ test('slugifyDungeonName lowercases and normalizes punctuation', () => {
     assert.equal(core.slugifyDungeonName('123'), '123')
 })
 
+test('includes the expanded dungeon list without realm suffixes', () => {
+    assert.ok(core.DUNGEONS.includes('Ragefire Chasm'))
+    assert.ok(core.DUNGEONS.includes('Hall of Thanes'))
+    assert.ok(core.DUNGEONS.includes('Wailing Caverns'))
+    assert.ok(core.DUNGEONS.includes('Ruins of Lordaeron'))
+    assert.ok(core.DUNGEONS.includes('Shadowfang Keep'))
+    assert.ok(core.DUNGEONS.includes('Blackfathom Deeps'))
+    assert.ok(core.DUNGEONS.includes('The Stockade'))
+    assert.ok(core.DUNGEONS.includes('Excavation Site: Wetlands'))
+    assert.ok(core.DUNGEONS.includes('City of Dalaran'))
+    assert.ok(core.DUNGEONS.includes('The Drowned City'))
+    assert.ok(core.DUNGEONS.includes("Krol'dok Stronghold"))
+    assert.ok(core.DUNGEONS.includes('Gnomeregan'))
+    assert.ok(core.DUNGEONS.includes('Karazhan Crypts'))
+    assert.equal(core.DUNGEONS.length, 38)
+})
+
 test('isRemoteUrl only accepts http(s) sources', () => {
     assert.equal(core.isRemoteUrl('https://example.com/bg.png'), true)
     assert.equal(core.isRemoteUrl('HTTP://example.com/bg.png'), true)
