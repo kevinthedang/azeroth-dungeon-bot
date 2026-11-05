@@ -142,7 +142,7 @@ test('start refuses when the channel already has a live run', async () => {
     const { interaction, replies } = makeInteraction({
         guild,
         channelId: channel,
-        strings: { dungeon: 'Moon Brook', members: '' },
+        strings: { dungeon: 'The Deadmines', members: '' },
     })
 
     await Start.run({} as never, interaction as never)
@@ -237,7 +237,7 @@ test('start rejects a dungeon outside the supported dropdown choices', async () 
     await Start.run({} as never, interaction as never)
 
     assert.equal(core.getActiveRun(channel), undefined)
-    assert.match(embedJson(replies[0]).description, /Ragefire Chasm.*Moon Brook/)
+    assert.match(embedJson(replies[0]).description, /Ragefire Chasm.*Karazhan Crypts/)
 })
 
 test('stop reports when there is no active run', async () => {

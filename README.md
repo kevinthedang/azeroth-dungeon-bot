@@ -14,11 +14,11 @@
 
 > [!NOTE]
 > The following background images are not available on ForeverDB yet:
-> 1. [ ] The Drowned City (Forever)
-> 2. [ ] Krol'dok Stronghold (Forever)
-> 3. [ ] Alcaz Prison (Forever)
+> 1. [x] The Drowned City (Forever)
+> 2. [x] Krol'dok Stronghold (Forever)
+> 3. [x] Alcaz Prison (Forever)
 > 4. [ ] Blackmaw Hold (Forever)
-> 5. [ ] Shaper's Terrace (Forever)
+> 5. [x] Shaper's Terrace (Forever)
 > 6. [ ] Demon Fall Canyon (Classic)
 > 7. [ ] Karazhan Crypts (Classic)
 
@@ -65,7 +65,7 @@ npm run test:watch
 
 | Command | Options | Description |
 | --- | --- | --- |
-| `/start` | `dungeon` (required dropdown: Moon Brook or The Deadmines), `members` (required) | Starts the dungeon timer for the current channel and lists the party on the run card. `members` accepts comma-separated Discord usernames or mentions. |
+| `/start` | `dungeon` (required autocomplete list), `members` (required) | Starts the dungeon timer for the current channel and lists the party on the run card. `members` accepts comma-separated Discord usernames or mentions. |
 | `/add-member` | `user` (required) | Adds a server member to the active run party and updates the run card. |
 | `/remove-member` | `member` (required, autocomplete) | Removes a member from the active run party. Autocomplete only lists people currently in the run. |
 | `/stop` | — | Stops the active dungeon timer and updates the run card with the finished time. |

@@ -9,7 +9,8 @@ const SPRITE_SIZE = 192
 const NAME_FONT_SIZE = 48
 const LINE_GAP = 32
 const MEMBER_GAP = 16
-const MIN_CARD_WIDTH = 320
+const CARD_WIDTH = 1600
+const CARD_HEIGHT = 672
 
 const NAME_MIN_FONT_SIZE = 20
 
@@ -78,17 +79,24 @@ export async function renderRunArt(backgroundUrl: string, members: RunMember[]):
     const visibleMembers = members.slice(0, MAX_PARTY_MEMBERS)
     const visibleCount = Math.max(visibleMembers.length, 1)
     const background = await loadImage(backgroundUrl)
-    const width = Math.max(background.width, MIN_CARD_WIDTH)
+    const width = CARD_WIDTH
     const availableForSprites = width - PADDING * 2 - Math.max(0, visibleCount - 1) * MEMBER_GAP
     const spriteSize = Math.min(SPRITE_SIZE, Math.floor(availableForSprites / visibleCount))
     const nameBoxWidth = spriteSize - MEMBER_GAP
 
     const contentHeight = PADDING * 2 + NAME_FONT_SIZE + LINE_GAP + spriteSize
-    const height = Math.max(contentHeight, background.height)
+    const height = Math.max(contentHeight, CARD_HEIGHT)
 
     const canvas = createCanvas(width, height)
     const ctx = canvas.getContext('2d')
-    ctx.drawImage(background, 0, 0, width, height)
+
+    // Fill the standard card without stretching. This crops only excess edges.
+    const scale = Math.max(width / background.width, height / background.height)
+    const drawWidth = background.width * scale
+    const drawHeight = background.height * scale
+    const drawX = (width - drawWidth) / 2
+    const drawY = (height - drawHeight) / 2
+    ctx.drawImage(background, drawX, drawY, drawWidth, drawHeight)
 
     let x = PADDING
     for (const member of visibleMembers) {

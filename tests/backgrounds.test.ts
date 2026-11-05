@@ -17,7 +17,7 @@ afterAll(cleanup)
 
 test('slugifyDungeonName lowercases and normalizes punctuation', () => {
     assert.equal(core.slugifyDungeonName('The Deadmines'), 'the_deadmines')
-    assert.equal(core.slugifyDungeonName('  Moon Brook!! '), 'moon_brook')
+    assert.equal(core.slugifyDungeonName('  Test Dungeon!! '), 'test_dungeon')
     assert.equal(core.slugifyDungeonName("Zul'Gurub"), 'zul_gurub')
     assert.equal(core.slugifyDungeonName('___'), '')
     assert.equal(core.slugifyDungeonName('123'), '123')
@@ -38,15 +38,13 @@ test('includes the expanded dungeon list without realm suffixes', () => {
     assert.ok(core.DUNGEONS.includes("Krol'dok Stronghold"))
     assert.ok(core.DUNGEONS.includes('Gnomeregan'))
     assert.ok(core.DUNGEONS.includes('Karazhan Crypts'))
-    assert.equal(core.DUNGEONS.length, 38)
+    assert.equal(core.DUNGEONS.length, 37)
 })
 
 test('includes and formats dungeon level ranges', () => {
     assert.equal(core.formatDungeonChoice('Ragefire Chasm'), 'Ragefire Chasm — Levels 13–18')
     assert.equal(core.formatDungeonChoice('The Deadmines'), 'The Deadmines — Levels 17–26')
-    assert.equal(core.formatDungeonChoice('Moon Brook'), 'Moon Brook')
     assert.equal(core.DUNGEONS[0], 'Ragefire Chasm')
-    assert.equal(core.DUNGEONS[core.DUNGEONS.length - 1], 'Moon Brook')
 })
 
 test('isRemoteUrl only accepts http(s) sources', () => {

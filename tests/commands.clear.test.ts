@@ -83,7 +83,7 @@ test('clear reports when there is nothing to delete', async () => {
     const { interaction, replies } = makeInteraction({
         guildId,
         canManage: true,
-        dungeon: 'Moon Brook',
+        dungeon: 'The Deadmines',
     })
 
     await Clear.run({} as never, interaction as never)
@@ -95,24 +95,24 @@ test('clear reports when there is nothing to delete', async () => {
 
 test('clear deletes history and leaves active runs untouched', async () => {
     const guildId = unique('guild')
-    addFinishedRun(guildId, 'Moon Brook', 100_000)
-    addFinishedRun(guildId, 'Moon Brook', 200_000)
+    addFinishedRun(guildId, 'The Deadmines', 100_000)
+    addFinishedRun(guildId, 'The Deadmines', 200_000)
 
     const activeChannel = unique('active-channel')
-    core.startRun(guildId, activeChannel, 'Moon Brook')
+    core.startRun(guildId, activeChannel, 'The Deadmines')
 
     const { interaction, replies } = makeInteraction({
         guildId,
         canManage: true,
-        dungeon: 'Moon Brook',
+        dungeon: 'The Deadmines',
     })
 
     await Clear.run({} as never, interaction as never)
 
     const json = embedJson(replies[0])
     assert.equal(json.title, '🧹 Dungeon history cleared')
-    assert.match(json.description, /Cleared `2` completed runs for \*\*Moon Brook\*\*/)
+    assert.match(json.description, /Cleared `2` completed runs for \*\*The Deadmines\*\*/)
     assert.match(json.description, /`1` run is still in progress and was left untouched/)
     assert.ok(core.getActiveRun(activeChannel))
-    assert.equal(core.getPersonalBest(guildId, 'Moon Brook'), null)
+    assert.equal(core.getPersonalBest(guildId, 'The Deadmines'), null)
 })

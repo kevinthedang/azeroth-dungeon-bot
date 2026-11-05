@@ -75,14 +75,14 @@ test('startRun creates a running run with its party in order', () => {
 test('run numbers are independent for each dungeon in a guild', () => {
     const guild = unique('guild-run-count')
     const deadmines1 = core.startRun(guild, unique('channel'), 'The Deadmines')
-    const moonbrook1 = core.startRun(guild, unique('channel'), 'Moon Brook')
+    const hallOfThanes1 = core.startRun(guild, unique('channel'), 'The Hall of Thanes')
     const deadmines2 = core.startRun(guild, unique('channel'), 'The Deadmines')
-    const moonbrook2 = core.startRun(guild, unique('channel'), 'Moon Brook')
+    const hallOfThanes2 = core.startRun(guild, unique('channel'), 'The Hall of Thanes')
 
     assert.equal(core.getDungeonRunNumber(deadmines1), 1)
-    assert.equal(core.getDungeonRunNumber(moonbrook1), 1)
+    assert.equal(core.getDungeonRunNumber(hallOfThanes1), 1)
     assert.equal(core.getDungeonRunNumber(deadmines2), 2)
-    assert.equal(core.getDungeonRunNumber(moonbrook2), 2)
+    assert.equal(core.getDungeonRunNumber(hallOfThanes2), 2)
 })
 
 test('getActiveRun and getActiveRuns see the live run', () => {
@@ -319,7 +319,7 @@ test('getPersonalBest finds the fastest finished run, case-insensitively', () =>
     assert.equal(core.getPersonalBest(guild, 'The Deadmines', slow), 600_000)
 
     assert.equal(core.getPersonalBest(unique('guild'), 'The Deadmines'), null)
-    assert.equal(core.getPersonalBest(guild, 'Moon Brook'), null)
+    assert.equal(core.getPersonalBest(guild, 'The Hall of Thanes'), null)
 })
 
 test('getPersonalBest subtracts paused time', () => {
@@ -339,25 +339,25 @@ test('clearHistory removes finished and cancelled runs but keeps active ones', (
     const guild = unique('guild')
     const activeChannel = unique('active-channel')
 
-    addRun(guild, 'Moon Brook', 100_000)
-    addRun(guild, 'Moon Brook', 200_000)
-    addRun(guild, 'Moon Brook', 300_000, { status: 'cancelled' })
-    addRun(unique('other-guild'), 'Moon Brook', 50_000)
+    addRun(guild, 'The Hall of Thanes', 100_000)
+    addRun(guild, 'The Hall of Thanes', 200_000)
+    addRun(guild, 'The Hall of Thanes', 300_000, { status: 'cancelled' })
+    addRun(unique('other-guild'), 'The Hall of Thanes', 50_000)
 
-    const active = core.startRun(guild, activeChannel, 'Moon Brook')
+    const active = core.startRun(guild, activeChannel, 'The Hall of Thanes')
 
-    const result = core.clearHistory(guild, 'moon brook')
+    const result = core.clearHistory(guild, 'The Hall of Thanes')
 
     assert.deepEqual(result, { deleted: 3, active: 1 })
     assert.equal(core.getActiveRun(activeChannel)?.id, active.id)
-    assert.equal(core.getPersonalBest(guild, 'Moon Brook'), null)
+    assert.equal(core.getPersonalBest(guild, 'The Hall of Thanes'), null)
 
     const afterActiveFinishes = core.finishRun(activeChannel)
     assert.equal(afterActiveFinishes?.status, 'finished')
 
-    const second = core.clearHistory(guild, 'Moon Brook')
+    const second = core.clearHistory(guild, 'The Hall of Thanes')
     assert.deepEqual(second, { deleted: 1, active: 0 })
-    assert.deepEqual(core.clearHistory(guild, 'Moon Brook'), { deleted: 0, active: 0 })
+    assert.deepEqual(core.clearHistory(guild, 'The Hall of Thanes'), { deleted: 0, active: 0 })
 })
 
 test('buildRunEmbed renders a running timer with party columns and no card by default', () => {
