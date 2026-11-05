@@ -70,21 +70,34 @@ function spriteSource(key: string): string | undefined {
     return existsSync(local) ? local : undefined
 }
 
+/** Members that have an available sprite, suitable for rendering on the card. */
+export function getRenderableMembers(members: RunMember[]): Array<{ member: RunMember; source: string }> {
+    return members
+        .slice(0, MAX_PARTY_MEMBERS)
+        .flatMap(member => {
+            if (!member.sprite) return []
+            const source = spriteSource(member.sprite)
+            return source ? [{ member, source }] : []
+        })
+}
+
 /**
  * Render a run card: dungeon background with each member's name above their
  * sprite, side by side from the bottom-left corner. Returns the composite as
  * a PNG buffer.
  */
 export async function renderRunArt(backgroundUrl: string, members: RunMember[]): Promise<Buffer> {
-    const visibleMembers = members.slice(0, MAX_PARTY_MEMBERS)
-    const visibleCount = Math.max(visibleMembers.length, 1)
+    const visibleMembers = getRenderableMembers(members)
+    const visibleCount = visibleMembers.length
     const background = await loadImage(backgroundUrl)
     const width = CARD_WIDTH
     const availableForSprites = width - PADDING * 2 - Math.max(0, visibleCount - 1) * MEMBER_GAP
     const spriteSize = Math.min(SPRITE_SIZE, Math.floor(availableForSprites / visibleCount))
     const nameBoxWidth = spriteSize - MEMBER_GAP
 
-    const contentHeight = PADDING * 2 + NAME_FONT_SIZE + LINE_GAP + spriteSize
+    const contentHeight = visibleCount > 0
+        ? PADDING * 2 + NAME_FONT_SIZE + LINE_GAP + spriteSize
+        : CARD_HEIGHT
     const height = Math.max(contentHeight, CARD_HEIGHT)
 
     const canvas = createCanvas(width, height)
@@ -99,8 +112,7 @@ export async function renderRunArt(backgroundUrl: string, members: RunMember[]):
     ctx.drawImage(background, drawX, drawY, drawWidth, drawHeight)
 
     let x = PADDING
-    for (const member of visibleMembers) {
-        const source = member.sprite ? spriteSource(member.sprite) : undefined
+    for (const { member, source } of visibleMembers) {
         const spriteY = height - PADDING - spriteSize
         const nameY = spriteY - LINE_GAP - NAME_FONT_SIZE / 2
 
@@ -143,8 +155,9 @@ export async function renderRunArtBuffer(dungeon: string, members: RunMember[]):
     const backgroundUrl = getDungeonBackground(dungeon)
     if (!backgroundUrl) return null
 
-    const key = `${backgroundUrl}|${dungeon}|${members
-        .map(member => `${member.userId}:${member.wowName ?? member.username}:${member.sprite ?? ''}`)
+    const visibleMembers = getRenderableMembers(members)
+    const key = `${backgroundUrl}|${dungeon}|${visibleMembers
+        .map(({ member }) => `${member.userId}:${member.wowName ?? member.username}:${member.sprite ?? ''}`)
         .sort()
         .join(',')}`
 

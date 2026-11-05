@@ -123,14 +123,16 @@ test('a broken sprite does not take the card down', async () => {
 })
 
 test('unknown sprite keys are skipped without failing the card', async () => {
-    const buffer = await services.renderRunArtBuffer('Test Dungeon', [
+    const members = [
         member(60, { sprite: 'male_orc' }),
         member(61, { sprite: null }),
-        member(62, { wowName: null, username: 'FallbackName' }),
-    ])
+        member(62, { wowName: null, username: 'FallbackName', sprite: null }),
+    ]
+    const buffer = await services.renderRunArtBuffer('Test Dungeon', members)
 
     assert.ok(buffer)
     assert.deepEqual(pngSize(buffer), { width: 1600, height: 672 })
+    assert.deepEqual(services.getRenderableMembers(members), [])
 })
 
 test('exposes the attachment filename used by the embed', () => {
