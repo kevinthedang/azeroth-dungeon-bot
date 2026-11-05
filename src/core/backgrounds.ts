@@ -65,7 +65,53 @@ export const DUNGEONS = [
     'Upper Blackrock Spire',
     'Demon Fall Canyon',
     'Karazhan Crypts',
+    'Moon Brook',
 ] as const
+
+export const DUNGEON_LEVEL_RANGES: Partial<Record<(typeof DUNGEONS)[number], string>> = {
+    'Ragefire Chasm': '13–18',
+    'Hall of Thanes': '13–20',
+    'Wailing Caverns': '15–24',
+    'Ruins of Lordaeron': '15–22',
+    'The Deadmines': '17–26',
+    'Shadowfang Keep': '20–30',
+    'Blackfathom Deeps': '24–32',
+    'The Stockade': '24–32',
+    'Excavation Site: Wetlands': '26–33',
+    'City of Dalaran': '28–35',
+    'Gnomeregan': '29–38',
+    'Razorfen Kraul': '29–38',
+    'Scarlet Monastery - Graveyard': '30–38',
+    'Scarlet Monastery - Library': '33–41',
+    'The Drowned City': '35–40',
+    'Scarlet Monastery - Armory': '36–44',
+    'Razorfen Downs': '37–46',
+    'Scarlet Monastery - Cathedral': '38–46',
+    "Krol'dok Stronghold": '40–45',
+    'Uldaman': '41–51',
+    "Zul'Farrak": '44–54',
+    'Maraudon': '46–55',
+    'Alcaz Prison': '48–53',
+    'Sunken Temple': '50–60',
+    'Blackrock Depths': '52–60',
+    'Dire Maul (East)': '54–60',
+    'Lower Blackrock Spire': '55–60',
+    'Blackmaw Hold': '55–60',
+    'Dire Maul (West)': '56–60',
+    'Dire Maul (North)': '56–60',
+    'Scholomance': '58–60',
+    'Stratholme (Main Gate)': '58–60',
+    'Stratholme (Service Gate)': '58–60',
+    "Shaper's Terrace": '58–60',
+    'Upper Blackrock Spire': '59–60',
+    'Demon Fall Canyon': '60–60',
+    'Karazhan Crypts': '60–60',
+}
+
+export function formatDungeonChoice(dungeon: (typeof DUNGEONS)[number]): string {
+    const levelRange = DUNGEON_LEVEL_RANGES[dungeon]
+    return levelRange ? `${dungeon} — Levels ${levelRange}` : dungeon
+}
 
 /** Lowercase the dungeon name and replace non-alphanumeric runs with `_`. */
 export function slugifyDungeonName(dungeon: string): string {

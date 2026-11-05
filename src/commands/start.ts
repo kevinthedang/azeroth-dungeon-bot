@@ -11,6 +11,7 @@ import {
     buildRunEmbed,
     DUNGEONS,
     formatElapsed,
+    formatDungeonChoice,
     getActiveRun,
     getPersonalBest,
     getRunMembers,
@@ -43,9 +44,9 @@ export const Start: SlashCommand = {
     autocomplete: async (_client: Client, interaction: AutocompleteInteraction) => {
         const query = interaction.options.getFocused().toLowerCase()
         const matches = DUNGEONS
-            .filter(dungeon => dungeon.toLowerCase().includes(query))
+            .filter(dungeon => formatDungeonChoice(dungeon).toLowerCase().includes(query))
             .slice(0, 25)
-            .map(dungeon => ({ name: dungeon, value: dungeon }))
+            .map(dungeon => ({ name: formatDungeonChoice(dungeon), value: dungeon }))
 
         await interaction.respond(matches)
     },

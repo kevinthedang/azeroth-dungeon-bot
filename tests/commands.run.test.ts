@@ -237,7 +237,7 @@ test('start rejects a dungeon outside the supported dropdown choices', async () 
     await Start.run({} as never, interaction as never)
 
     assert.equal(core.getActiveRun(channel), undefined)
-    assert.match(embedJson(replies[0]).description, /Moon Brook, The Deadmines/)
+    assert.match(embedJson(replies[0]).description, /Ragefire Chasm.*Moon Brook/)
 })
 
 test('stop reports when there is no active run', async () => {

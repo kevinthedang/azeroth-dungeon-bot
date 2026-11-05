@@ -7,7 +7,7 @@ import {
     PermissionFlagsBits,
 } from "discord.js";
 import { SlashCommand, errorEmbed, infoEmbed, successEmbed } from "../utils/index.js";
-import { clearHistory, DUNGEONS } from "../core/index.js";
+import { clearHistory, DUNGEONS, formatDungeonChoice } from "../core/index.js";
 
 export const Clear: SlashCommand = {
     name: "clear",
@@ -26,9 +26,9 @@ export const Clear: SlashCommand = {
     autocomplete: async (_client: Client, interaction: AutocompleteInteraction) => {
         const query = interaction.options.getFocused().toLowerCase()
         const matches = DUNGEONS
-            .filter(dungeon => dungeon.toLowerCase().includes(query))
+            .filter(dungeon => formatDungeonChoice(dungeon).toLowerCase().includes(query))
             .slice(0, 25)
-            .map(dungeon => ({ name: dungeon, value: dungeon }))
+            .map(dungeon => ({ name: formatDungeonChoice(dungeon), value: dungeon }))
 
         await interaction.respond(matches)
     },

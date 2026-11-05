@@ -40,6 +40,14 @@ test('includes the expanded dungeon list without realm suffixes', () => {
     assert.equal(core.DUNGEONS.length, 38)
 })
 
+test('includes and formats dungeon level ranges', () => {
+    assert.equal(core.formatDungeonChoice('Ragefire Chasm'), 'Ragefire Chasm — Levels 13–18')
+    assert.equal(core.formatDungeonChoice('The Deadmines'), 'The Deadmines — Levels 17–26')
+    assert.equal(core.formatDungeonChoice('Moon Brook'), 'Moon Brook')
+    assert.equal(core.DUNGEONS[0], 'Ragefire Chasm')
+    assert.equal(core.DUNGEONS[core.DUNGEONS.length - 1], 'Moon Brook')
+})
+
 test('isRemoteUrl only accepts http(s) sources', () => {
     assert.equal(core.isRemoteUrl('https://example.com/bg.png'), true)
     assert.equal(core.isRemoteUrl('HTTP://example.com/bg.png'), true)
