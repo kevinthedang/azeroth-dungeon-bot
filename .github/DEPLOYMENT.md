@@ -233,4 +233,11 @@ tar -czf azeroth-chronicle-backup.tgz \
 - **Deploy did not run** — the `Deploy` workflow only runs after the `Test`
   workflow succeeds for a push to `master`. A push that only touches files
   outside `test.yml`'s path filters will not trigger it.
-- **GitHub cannot reach the Pi** — see [Network access](#network-access).
+- **GitHub cannot reach the Pi** — see [Network access](#network-access). In
+  particular, `raspberrypi.local`, mDNS names, and `192.168.x.x`/`10.x.x.x`
+  addresses only work on your LAN and cannot be reached by a GitHub-hosted
+  runner. Use a Tailscale name or another tunnel.
+- **`ssh-keyscan` fails in the "Trust the Raspberry Pi host key" step** — the
+  runner could not open a TCP connection to `DEPLOY_HOST:DEPLOY_PORT`. Check the
+  hostname, that SSH is running on the Pi, and that the address is reachable
+  from the public internet.

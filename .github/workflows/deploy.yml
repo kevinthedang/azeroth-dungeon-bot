@@ -68,6 +68,32 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha || inputs.ref }}
 
+      - name: Validate deploy configuration
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "::error::The ${name} secret is not set."
+              missing=1
+            fi
+          done
+          if [ "${missing}" -ne 0 ]; then
+            exit 1
+          fi
+          case "${DEPLOY_HOST}" in
+            *[[:space:]]*|*'@'*|*'/'*|*:*)
+              echo "::error::DEPLOY_HOST must be a bare hostname or IP (no scheme, user, port, or whitespace). Got: '${DEPLOY_HOST}'"
+              exit 1
+              ;;
+          esac
+          echo "Deploy target: ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PORT:-22}"
+
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -85,7 +111,19 @@ jobs:
           if [ -n "${DEPLOY_KNOWN_HOSTS}" ]; then
             printf '%s\n' "${DEPLOY_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
           else
-            ssh-keyscan -p "${DEPLOY_PORT}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
+            echo "Checking TCP connectivity to ${DEPLOY_HOST}:${DEPLOY_PORT}..."
+            if ! timeout 10 bash -c "exec 3<>/dev/tcp/${DEPLOY_HOST}/${DEPLOY_PORT}"; then
+              echo "::error::Cannot open a TCP connection to ${DEPLOY_HOST}:${DEPLOY_PORT} from this GitHub runner."
+              echo "::error::A GitHub-hosted runner cannot reach a Pi on a private LAN by default."
+              echo "::error::Use Tailscale, Cloudflare Tunnel, or port forwarding. See .github/DEPLOYMENT.md#network-access"
+              exit 1
+            fi
+            if ! ssh-keyscan -T 10 -p "${DEPLOY_PORT}" -H "${DEPLOY_HOST}" > /tmp/deploy-host-key 2> /tmp/deploy-host-key.err; then
+              echo "::error::ssh-keyscan could not retrieve a host key from ${DEPLOY_HOST}:${DEPLOY_PORT}."
+              sed 's/^/  /' /tmp/deploy-host-key.err >&2 || true
+              exit 1
+            fi
+            cat /tmp/deploy-host-key >> ~/.ssh/known_hosts
           fi
           chmod 600 ~/.ssh/known_hosts
 
