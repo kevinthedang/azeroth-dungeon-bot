@@ -187,8 +187,17 @@ jobs:
           # Install and build on the Pi itself.
           echo "Installing dependencies and building on the Pi..."
           ${SSH} "export PATH=/usr/local/bin:/usr/bin:/bin:\${PATH}; \
+            if [ -s \"\${HOME}/.nvm/nvm.sh\" ]; then \
+              . \"\${HOME}/.nvm/nvm.sh\"; \
+            fi; \
+            for node_dir in /opt/nodejs/bin /usr/local/lib/nodejs/*/bin \${HOME}/.nvm/versions/node/*/bin; do \
+              if [ -x \"\${node_dir}/node\" ] && [ -x \"\${node_dir}/npm\" ]; then \
+                export PATH=\"\${node_dir}:\${PATH}\"; break; \
+              fi; \
+            done; \
             cd '${DEPLOY_PATH}' && \
-            command -v node >/dev/null && command -v npm >/dev/null && \
+            echo \"Node: \$(command -v node || echo missing)\" && \
+            echo \"npm: \$(command -v npm || echo missing)\" && \
             node --version && npm ci && npm run build"
 
           # Restart only after a successful build, then confirm it is running.
