@@ -29,13 +29,13 @@ const DUNGEON_BACKGROUNDS: Record<string, string> = {
 /** Dungeons currently supported by the /start dropdown. */
 export const DUNGEONS = [
     'Ragefire Chasm',
-    'Hall of Thanes',
+    'The Hall of Thanes',
     'Wailing Caverns',
     'Ruins of Lordaeron',
     'The Deadmines',
     'Shadowfang Keep',
     'Blackfathom Deeps',
-    'The Stockade',
+    'Stormwind Stockade',
     'Excavation Site: Wetlands',
     'City of Dalaran',
     'Gnomeregan',
@@ -65,18 +65,17 @@ export const DUNGEONS = [
     'Upper Blackrock Spire',
     'Demon Fall Canyon',
     'Karazhan Crypts',
-    'Moon Brook',
 ] as const
 
 export const DUNGEON_LEVEL_RANGES: Partial<Record<(typeof DUNGEONS)[number], string>> = {
     'Ragefire Chasm': '13–18',
-    'Hall of Thanes': '13–20',
+    'The Hall of Thanes': '13–20',
     'Wailing Caverns': '15–24',
     'Ruins of Lordaeron': '15–22',
     'The Deadmines': '17–26',
     'Shadowfang Keep': '20–30',
     'Blackfathom Deeps': '24–32',
-    'The Stockade': '24–32',
+    'Stormwind Stockade': '24–32',
     'Excavation Site: Wetlands': '26–33',
     'City of Dalaran': '28–35',
     'Gnomeregan': '29–38',
@@ -141,6 +140,26 @@ export function isRemoteUrl(source: string): boolean {
  */
 export function getDungeonBackground(dungeon: string): string | undefined {
     const slug = slugifyDungeonName(dungeon)
+
+    if (slug.startsWith('scarlet_monastery')) {
+        const shared = localBackground('scarlet_monastery')
+        if (shared) return shared
+    }
+
+    if (slug.startsWith('dire_maul')) {
+        const shared = localBackground('dire_maul')
+        if (shared) return shared
+    }
+
+    if (slug.endsWith('blackrock_spire')) {
+        const shared = localBackground('blackrock_spire')
+        if (shared) return shared
+    }
+
+    if (slug.startsWith('stratholme')) {
+        const shared = localBackground('stratholme')
+        if (shared) return shared
+    }
 
     return localBackground(slug)
         ?? DUNGEON_BACKGROUNDS[slug]

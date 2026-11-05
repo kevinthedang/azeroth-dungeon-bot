@@ -33,7 +33,7 @@ function member(index: number, overrides: Record<string, unknown> = {}) {
     }
 }
 
-test('renders a card for the dungeon background at the minimum width', async () => {
+test('renders a card at the dungeon background native width', async () => {
     writePng(join(backgroundsDir, 'test_dungeon.png'), 1200, 600)
     writePng(join(spritesDir, 'female_tauren.png'), 256, 256, '#aa3344')
 
@@ -43,7 +43,7 @@ test('renders a card for the dungeon background at the minimum width', async () 
     const buffer = await services.renderRunArtBuffer('Test Dungeon', [member(1)])
     assert.ok(buffer)
 
-    assert.deepEqual(pngSize(buffer), { width: 1100, height: 600 })
+    assert.deepEqual(pngSize(buffer), { width: 1200, height: 600 })
 })
 
 test('keeps the card width fixed for large parties', async () => {
@@ -52,7 +52,7 @@ test('keeps the card width fixed for large parties', async () => {
     const buffer = await services.renderRunArtBuffer('Test Dungeon', members)
     assert.ok(buffer)
 
-    assert.deepEqual(pngSize(buffer), { width: 1100, height: 600 })
+    assert.deepEqual(pngSize(buffer), { width: 1200, height: 600 })
 })
 
 test('keeps equal left and right card borders for five sprites', async () => {
@@ -60,7 +60,7 @@ test('keeps equal left and right card borders for five sprites', async () => {
 
     const buffer = await services.renderRunArtBuffer('Test Dungeon', members)
     assert.ok(buffer)
-    assert.deepEqual(pngSize(buffer), { width: 1100, height: 600 })
+    assert.deepEqual(pngSize(buffer), { width: 1200, height: 600 })
 })
 
 test('caches identical card renders', async () => {
@@ -76,7 +76,7 @@ test('caches identical card renders', async () => {
 test('uses default.png when the dungeon has no art of its own', async () => {
     const buffer = await services.renderRunArtBuffer('Fresh Dungeon', [member(30)])
     assert.ok(buffer)
-    assert.deepEqual(pngSize(buffer), { width: 1100, height: 400 })
+    assert.deepEqual(pngSize(buffer), { width: 320, height: 400 })
 })
 
 test('returns null when no background exists at all', async () => {
@@ -115,7 +115,7 @@ test('a broken sprite does not take the card down', async () => {
     try {
         const buffer = await services.renderRunArtBuffer('Broken Sprite', [member(50)])
         assert.ok(buffer)
-        assert.deepEqual(pngSize(buffer), { width: 1100, height: 400 })
+        assert.deepEqual(pngSize(buffer), { width: 320, height: 400 })
     } finally {
         if (previous === undefined) delete process.env.AZEROTH_ASSETS_DIR
         else process.env.AZEROTH_ASSETS_DIR = previous
@@ -130,7 +130,7 @@ test('unknown sprite keys are skipped without failing the card', async () => {
     ])
 
     assert.ok(buffer)
-    assert.deepEqual(pngSize(buffer), { width: 1100, height: 600 })
+    assert.deepEqual(pngSize(buffer), { width: 1200, height: 600 })
 })
 
 test('exposes the attachment filename used by the embed', () => {

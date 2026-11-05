@@ -25,12 +25,13 @@ test('slugifyDungeonName lowercases and normalizes punctuation', () => {
 
 test('includes the expanded dungeon list without realm suffixes', () => {
     assert.ok(core.DUNGEONS.includes('Ragefire Chasm'))
-    assert.ok(core.DUNGEONS.includes('Hall of Thanes'))
+    assert.ok(core.DUNGEONS.includes('The Hall of Thanes'))
     assert.ok(core.DUNGEONS.includes('Wailing Caverns'))
     assert.ok(core.DUNGEONS.includes('Ruins of Lordaeron'))
     assert.ok(core.DUNGEONS.includes('Shadowfang Keep'))
     assert.ok(core.DUNGEONS.includes('Blackfathom Deeps'))
-    assert.ok(core.DUNGEONS.includes('The Stockade'))
+    assert.ok(core.DUNGEONS.includes('Stormwind Stockade'))
+    assert.ok(!core.DUNGEONS.includes('The Stockade'))
     assert.ok(core.DUNGEONS.includes('Excavation Site: Wetlands'))
     assert.ok(core.DUNGEONS.includes('City of Dalaran'))
     assert.ok(core.DUNGEONS.includes('The Drowned City'))
@@ -65,8 +66,66 @@ test('a local dungeon file wins over the registered URL', () => {
     )
 })
 
+test('all Scarlet Monastery wings use the shared background image', () => {
+    const sharedBackground = join(backgroundsDir, 'scarlet_monastery.png')
+    writePng(sharedBackground)
+
+    for (const dungeon of [
+        'Scarlet Monastery - Graveyard',
+        'Scarlet Monastery - Library',
+        'Scarlet Monastery - Armory',
+        'Scarlet Monastery - Cathedral',
+    ]) {
+        assert.equal(core.getDungeonBackground(dungeon), sharedBackground)
+    }
+})
+
+test('all Dire Maul wings use the shared background image', () => {
+    const sharedBackground = join(backgroundsDir, 'dire_maul.png')
+    writePng(sharedBackground)
+
+    for (const dungeon of [
+        'Dire Maul (East)',
+        'Dire Maul (West)',
+        'Dire Maul (North)',
+    ]) {
+        assert.equal(core.getDungeonBackground(dungeon), sharedBackground)
+    }
+})
+
+test('both Blackrock Spire wings use the shared background image', () => {
+    const sharedBackground = join(backgroundsDir, 'blackrock_spire.png')
+    writePng(sharedBackground)
+
+    for (const dungeon of [
+        'Lower Blackrock Spire',
+        'Upper Blackrock Spire',
+    ]) {
+        assert.equal(core.getDungeonBackground(dungeon), sharedBackground)
+    }
+})
+
+test('both Stratholme gates use the shared background image', () => {
+    const sharedBackground = join(backgroundsDir, 'stratholme.png')
+    writePng(sharedBackground)
+
+    for (const dungeon of [
+        'Stratholme (Main Gate)',
+        'Stratholme (Service Gate)',
+    ]) {
+        assert.equal(core.getDungeonBackground(dungeon), sharedBackground)
+    }
+})
+
 test('falls back to default.png when the dungeon has no art', () => {
     assert.equal(core.getDungeonBackground('Nowhere Special'), defaultBackground)
+})
+
+test('Zul Farrak resolves the renamed slug file', () => {
+    const zulfarrakBackground = join(backgroundsDir, 'zul_farrak.png')
+    writePng(zulfarrakBackground)
+
+    assert.equal(core.getDungeonBackground("Zul'Farrak"), zulfarrakBackground)
 })
 
 test('a registered URL is used until it is cleared', () => {

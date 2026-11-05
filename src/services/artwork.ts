@@ -4,12 +4,12 @@ import { createCanvas, loadImage } from '@napi-rs/canvas'
 import { assetsDir, getDungeonBackground, getSpriteUrl, isSpriteKey } from '../core/index.js'
 import type { RunMember } from '../core/index.js'
 
-const WIDTH = 1100
 const PADDING = 64
 const SPRITE_SIZE = 192
 const NAME_FONT_SIZE = 48
 const LINE_GAP = 32
 const MEMBER_GAP = 16
+const MIN_CARD_WIDTH = 320
 
 const NAME_MIN_FONT_SIZE = 20
 
@@ -75,15 +75,14 @@ function spriteSource(key: string): string | undefined {
  * a PNG buffer.
  */
 export async function renderRunArt(backgroundUrl: string, members: RunMember[]): Promise<Buffer> {
-    const memberCount = Math.max(members.length, 1)
     const visibleMembers = members.slice(0, MAX_PARTY_MEMBERS)
     const visibleCount = Math.max(visibleMembers.length, 1)
-    const availableForSprites = WIDTH - PADDING * 2 - Math.max(0, visibleCount - 1) * MEMBER_GAP
+    const background = await loadImage(backgroundUrl)
+    const width = Math.max(background.width, MIN_CARD_WIDTH)
+    const availableForSprites = width - PADDING * 2 - Math.max(0, visibleCount - 1) * MEMBER_GAP
     const spriteSize = Math.min(SPRITE_SIZE, Math.floor(availableForSprites / visibleCount))
     const nameBoxWidth = spriteSize - MEMBER_GAP
-    const width = WIDTH
 
-    const background = await loadImage(backgroundUrl)
     const contentHeight = PADDING * 2 + NAME_FONT_SIZE + LINE_GAP + spriteSize
     const height = Math.max(contentHeight, background.height)
 

@@ -12,6 +12,16 @@
 > [!NOTE]
 > Under Active Development unless otherwise noted
 
+> [!NOTE]
+> The following background images are not available on ForeverDB yet:
+> 1. [ ] The Drowned City (Forever)
+> 2. [ ] Krol'dok Stronghold (Forever)
+> 3. [ ] Alcaz Prison (Forever)
+> 4. [ ] Blackmaw Hold (Forever)
+> 5. [ ] Shaper's Terrace (Forever)
+> 6. [ ] Demon Fall Canyon (Classic)
+> 7. [ ] Karazhan Crypts (Classic)
+
 ## About
 A simple discord bot that takes the input of the people who are going on a raid and tracks how long it takes to go through a particular dungeon in WoW.
 
