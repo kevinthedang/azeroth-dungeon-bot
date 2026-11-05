@@ -150,6 +150,8 @@ Secrets:
 | `CLIENT_TOKEN` | Discord bot token |
 | `DEPLOY_PORT` | Optional, defaults to `22` |
 | `DEPLOY_KNOWN_HOSTS` | Optional pinned host key; see below |
+| `TS_OAUTH_CLIENT_ID` | Optional Tailscale OAuth client ID; see [Network access](#network-access) |
+| `TS_OAUTH_SECRET` | Optional Tailscale OAuth client secret |
 
 Variables (optional):
 
@@ -170,23 +172,67 @@ ssh-keyscan -p 22 -H raspberrypi.local
 
 ## Network access
 
-The GitHub-hosted runner is on the public internet. If the Pi is only reachable
-on your home LAN, pick one of these:
+The GitHub-hosted runner is on the public internet. A Pi on your home LAN
+(`raspberrypi.local`, `192.168.x.x`, `10.x.x.x`, and so on) is **not reachable**
+from it. The deploy will fail at the TCP connectivity check until the Pi is
+reachable over the internet.
 
-- **Tailscale (recommended):** install Tailscale on the Pi and use its
-  MagicDNS name or `100.x.y.z` address as `DEPLOY_HOST`. The GitHub runner must
-  also join the tailnet, for example with the `tailscale/github-action` and a
-  Tailscale OAuth client secret, or use [Tailscale Funnel](https://tailscale.com/kb/1223/funnel)
-  for SSH.
-- **Cloudflare Tunnel:** run `cloudflared` on the Pi and expose SSH through the
-  tunnel.
-- **Port forwarding:** forward a non-default external port to the Pi's SSH port
-  and set `DEPLOY_HOST`/`DEPLOY_PORT` accordingly. This exposes SSH to the
-  internet, so use key-only auth and a firewall.
+### Option 1: Tailscale (recommended)
 
-If none of these are acceptable, a self-hosted GitHub runner on the Pi is the
-alternative, but this repository is public: do not attach a self-hosted runner
-to a public repo, because pull requests can execute code on it.
+Tailscale gives the runner and the Pi private addresses on the same virtual
+network, so you do not need to expose SSH to the internet.
+
+**On the Pi:**
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+tailscale ip -4          # note this 100.x.y.z address
+hostname                 # or use the MagicDNS name
+```
+
+**In the Tailscale admin console:**
+
+1. Go to **Settings > OAuth clients** and create a client with the `auth_keys`
+   scope and the `tag:github-actions` tag.
+2. Add an access rule so `tag:github-actions` can reach the Pi on port 22, for
+   example:
+
+   ```json
+   {
+     "grants": [
+       {
+         "src": ["tag:github-actions"],
+         "dst": ["tag:server"],
+         "ip": ["tcp:22"]
+       }
+     ]
+   }
+   ```
+
+   Tag the Pi with `tag:server` in the admin console, or use your existing ACLs.
+3. Copy the client ID and secret into the `TS_OAUTH_CLIENT_ID` and
+   `TS_OAUTH_SECRET` GitHub secrets.
+
+The deploy workflow automatically joins the tailnet with
+`tailscale/github-action` when both secrets are present, then connects to the
+Pi. Set `DEPLOY_HOST` to the Pi's Tailscale IP (`100.x.y.z`) or MagicDNS name.
+
+### Option 2: Cloudflare Tunnel
+
+Run `cloudflared` on the Pi and expose SSH through the tunnel, then point
+`DEPLOY_HOST`/`DEPLOY_PORT` at the tunnel endpoint. The workflow itself does not
+need changes.
+
+### Option 3: Port forwarding
+
+Forward a non-default external port to the Pi's SSH port and set
+`DEPLOY_HOST`/`DEPLOY_PORT` accordingly. This exposes SSH to the internet, so
+use key-only authentication and a firewall.
+
+A self-hosted GitHub runner on the Pi is another option, but this repository is
+public: do not attach a self-hosted runner to a public repo, because pull
+requests can execute code on it.
 
 ## Deploying an update
 
