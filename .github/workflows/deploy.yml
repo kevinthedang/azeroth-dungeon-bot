@@ -1,0 +1,132 @@
+name: Deploy
+
+# Only deploy after the Test workflow succeeds for a push to master.
+# This replaces the old `on: push` / `on: pull_request` triggers, which
+# would have run a deploy for pull requests as well.
+on:
+  workflow_run:
+    workflows:
+      - Test
+    types:
+      - completed
+    branches:
+      - master
+  # Manual runs are useful for rollbacks: choose a previous commit SHA.
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref or commit SHA to deploy
+        required: true
+        default: master
+        type: string
+
+# Never let two deploys overlap.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify build
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out the tested commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || inputs.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+  deploy:
+    name: Deploy to Raspberry Pi
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out the tested commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || inputs.ref }}
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Trust the Raspberry Pi host key
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          if [ -n "${DEPLOY_KNOWN_HOSTS}" ]; then
+            printf '%s\n' "${DEPLOY_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
+          else
+            ssh-keyscan -p "${DEPLOY_PORT}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
+          fi
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Sync files and restart the bot
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/opt/azeroth-chronicle-bot' }}
+          DEPLOY_SERVICE: ${{ vars.DEPLOY_SERVICE || 'wow-dungeon-bot' }}
+          CLIENT_TOKEN: ${{ secrets.CLIENT_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CLIENT_TOKEN}" ]; then
+            echo "::error::The CLIENT_TOKEN secret is not set."
+            exit 1
+          fi
+
+          SSH="ssh -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST}"
+          TARGET="${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
+
+          # Copy the source tree. data/ and .env are excluded so the live
+          # SQLite database and token on the Pi are never overwritten or
+          # deleted. node_modules is rebuilt on the Pi so native modules
+          # (@napi-rs/canvas) match the Pi's CPU architecture.
+          rsync -az --delete \
+            --exclude '.git' \
+            --exclude 'node_modules' \
+            --exclude 'data' \
+            --exclude '.env' \
+            -e "ssh -p ${DEPLOY_PORT}" \
+            ./ "${TARGET}"
+
+          # Write the token to the Pi without exposing it in the process list.
+          printf 'CLIENT_TOKEN=%s\n' "${CLIENT_TOKEN}" |
+            ${SSH} "umask 077 && cat > '${DEPLOY_PATH}/.env'"
+
+          # Install and build on the Pi itself.
+          ${SSH} "cd '${DEPLOY_PATH}' && npm ci && npm run build"
+
+          # Restart only after a successful build, then confirm it is running.
+          ${SSH} "sudo -n systemctl restart '${DEPLOY_SERVICE}'"
+          ${SSH} "systemctl is-active --quiet '${DEPLOY_SERVICE}'"

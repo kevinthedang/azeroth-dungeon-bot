@@ -1,8 +1,11 @@
 <div align="center">
     <h1>Azeroth Chronicle</h1>
     <h3>World of Warcraft Dungeon Tracking Discord Bot</h3>
-    <a href="https://github.com/kevinthedang/azeroth-chronicle-bot/actions/workflows/test.yml">
-        <img src="https://github.com/kevinthedang/azeroth-chronicle-bot/actions/workflows/test.yml/badge.svg" alt="Tests">
+    <a href="https://github.com/kevinthedang/azeroth-dungeon-bot/actions/workflows/test.yml">
+        <img src="https://github.com/kevinthedang/azeroth-dungeon-bot/actions/workflows/test.yml/badge.svg" alt="Tests">
+    </a>
+    <a href="https://github.com/kevinthedang/azeroth-dungeon-bot/actions/workflows/deploy.yml">
+        <img src="https://github.com/kevinthedang/azeroth-dungeon-bot/actions/workflows/deploy.yml/badge.svg" alt="Deploy">
     </a>
 </div>
 
@@ -36,7 +39,7 @@ Do not commit the real token to source control. Restart the bot after changing t
 
 ## Deployment
 
-Pushing to `master` runs the GitHub Actions test workflow but does not deploy the bot automatically. See [.github/DEPLOYMENT.md](.github/DEPLOYMENT.md) for Raspberry Pi and systemd setup.
+Pushing to `master` runs the tests, then automatically deploys to the Raspberry Pi over SSH once they pass. The workflow rebuilds on the Pi, preserves `data/` and `.env`, and restarts the systemd service. See [.github/DEPLOYMENT.md](.github/DEPLOYMENT.md) for one-time Raspberry Pi setup, required GitHub secrets, and rollback instructions.
 
 ## Testing
 The test suite uses [Vitest](https://vitest.dev/) and never touches the real database or asset folders — each test file runs against an in-memory SQLite database and a temporary asset tree.
