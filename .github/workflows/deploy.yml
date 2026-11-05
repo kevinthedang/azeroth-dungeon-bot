@@ -202,6 +202,14 @@ jobs:
 
           # Restart only after a successful build, then confirm it is running.
           echo "Restarting the bot service..."
-          ${SSH} "sudo -n systemctl restart '${DEPLOY_SERVICE}'"
+          ${SSH} "sudo -n systemctl restart '${DEPLOY_SERVICE}' || { \
+            sudo -n systemctl status '${DEPLOY_SERVICE}' --no-pager || true; \
+            sudo -n journalctl -u '${DEPLOY_SERVICE}' -n 50 --no-pager || true; \
+            exit 1; \
+          }"
           echo "Confirming the bot service is active..."
-          ${SSH} "systemctl is-active --quiet '${DEPLOY_SERVICE}'"
+          ${SSH} "systemctl is-active --quiet '${DEPLOY_SERVICE}' || { \
+            systemctl status '${DEPLOY_SERVICE}' --no-pager || true; \
+            sudo -n journalctl -u '${DEPLOY_SERVICE}' -n 50 --no-pager || true; \
+            exit 1; \
+          }"

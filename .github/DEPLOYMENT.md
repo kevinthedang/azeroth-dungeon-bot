@@ -76,7 +76,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/azeroth-chronicle-bot
-ExecStart=/usr/bin/node dist/index.js
+ExecStart=/home/YOUR_USERNAME/.nvm/versions/node/v24.22.2/bin/node dist/index.js
 Restart=always
 RestartSec=5
 Environment=NODE_ENV=production

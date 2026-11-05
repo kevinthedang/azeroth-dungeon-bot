@@ -12,6 +12,7 @@ on:
       - package-lock.json
       - tsconfig.json
       - .github/workflows/test.yml
+      - .github/workflows/deploy.yml
   pull_request:
     paths:
       - src/**
