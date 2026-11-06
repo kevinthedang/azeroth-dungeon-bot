@@ -29,8 +29,9 @@ export const SetChannel: SlashCommand = {
                 return
             }
 
-            const parentId = (interaction.channel as { parentId?: string | null } | null)?.parentId
-            const allowedChannelId = parentId ?? interaction.channelId
+            const allowedChannelId = interaction.channel?.isThread()
+                ? interaction.channel.parentId ?? interaction.channelId
+                : interaction.channelId
             setCommandChannel(interaction.guildId, allowedChannelId)
 
             await interaction.editReply({

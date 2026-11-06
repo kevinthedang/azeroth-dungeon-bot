@@ -10,7 +10,7 @@ import commands from '../commands/index.js'
 export default event(Events.InteractionCreate, async ({ log, client }, interaction) => {
     if (interaction.isAutocomplete()) {
         if (interaction.guildId && interaction.commandName !== 'set-channel') {
-            const parentId = (interaction.channel as { parentId?: string | null } | null)?.parentId
+            const parentId = interaction.channel?.isThread() ? interaction.channel.parentId : null
             if (!isCommandChannelAllowed(interaction.guildId, interaction.channelId, parentId)) return
         }
 
@@ -31,7 +31,7 @@ export default event(Events.InteractionCreate, async ({ log, client }, interacti
     log(`Interaction called '${interaction.commandName}' from ${interaction.user.tag}.`)
 
     if (interaction.guildId && interaction.commandName !== 'set-channel') {
-        const parentId = (interaction.channel as { parentId?: string | null } | null)?.parentId
+        const parentId = interaction.channel?.isThread() ? interaction.channel.parentId : null
         const allowedChannelId = getCommandChannel(interaction.guildId)
         if (!isCommandChannelAllowed(interaction.guildId, interaction.channelId, parentId)) {
             await interaction.reply({

@@ -7,11 +7,21 @@ const { SetChannel } = await loadCommand('setChannel')
 
 afterAll(cleanup)
 
-function makeInteraction(guildId: string | null, channelId = 'channel-1', manageGuild = true) {
+function makeInteraction(
+    guildId: string | null,
+    channelId = 'channel-1',
+    manageGuild = true,
+    isThread = false,
+    parentId: string | null = null,
+) {
     const replies: any[] = []
     const interaction = {
         guildId,
         channelId,
+        channel: {
+            isThread: () => isThread,
+            parentId,
+        },
         memberPermissions: {
             has: () => manageGuild,
         },
@@ -44,6 +54,34 @@ test('command restriction allows configured channel threads', () => {
 
     assert.equal(core.isCommandChannelAllowed('guild-thread-test', 'thread-1', 'channel-parent'), true)
     assert.equal(core.isCommandChannelAllowed('guild-thread-test', 'channel-other', null), false)
+})
+
+test('set-channel ignores category parentId for a normal text channel', async () => {
+    const { interaction } = makeInteraction(
+        'guild-categorized-channel',
+        '1568088123039027220',
+        true,
+        false,
+        'category-id',
+    )
+
+    await SetChannel.run({} as never, interaction as never)
+
+    assert.equal(core.getCommandChannel('guild-categorized-channel'), '1568088123039027220')
+})
+
+test('set-channel uses the parent text channel when run in a thread', async () => {
+    const { interaction } = makeInteraction(
+        'guild-thread-setting',
+        'thread-id',
+        true,
+        true,
+        'parent-channel-id',
+    )
+
+    await SetChannel.run({} as never, interaction as never)
+
+    assert.equal(core.getCommandChannel('guild-thread-setting'), 'parent-channel-id')
 })
 
 test('set-channel replaces an existing channel setting', async () => {
