@@ -2,10 +2,10 @@ import { db } from './db.js'
 
 /** WoW character names are short; keep the card readable too. */
 export const WOW_NAME_MIN_LENGTH = 2
-export const WOW_NAME_MAX_LENGTH = 12
+export const WOW_NAME_MAX_LENGTH = 24
 
-/** Letters, plus the apostrophe and hyphen some realms allow. */
-const WOW_NAME_PATTERN = /^[\p{L}][\p{L}'-]*$/u
+/** Letters, spaces, plus apostrophes and hyphens some realms allow. */
+const WOW_NAME_PATTERN = /^[\p{L}][\p{L}'-]*(?: [\p{L}][\p{L}'-]*)*$/u
 
 const upsertNameStmt = db.prepare(`
     INSERT INTO player_names (guild_id, user_id, name, updated_at)

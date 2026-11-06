@@ -13,18 +13,21 @@ test('normalizeWowName accepts normal character names', () => {
     assert.equal(core.normalizeWowName('Half-Elf'), 'Half-Elf')
     assert.equal(core.normalizeWowName('Ávö'), 'Ávö')
     assert.equal(core.normalizeWowName('Jo'), 'Jo')
-    assert.equal(core.normalizeWowName('Abcdefghijkl'), 'Abcdefghijkl')
+    assert.equal(core.normalizeWowName('AbcdefghijklmnopqrstuVwx'), 'AbcdefghijklmnopqrstuVwx')
+    assert.equal(core.normalizeWowName('Thr all'), 'Thr all')
+    assert.equal(core.normalizeWowName('Mary Jane'), 'Mary Jane')
 })
 
 test('normalizeWowName rejects names outside the rules', () => {
     assert.equal(core.normalizeWowName(''), null)
     assert.equal(core.normalizeWowName('   '), null)
     assert.equal(core.normalizeWowName('J'), null)
-    assert.equal(core.normalizeWowName('Thirteenchars'), null)
+    assert.equal(core.normalizeWowName('TwentyFiveCharactersXXXXX'), null)
     assert.equal(core.normalizeWowName('123'), null)
-    assert.equal(core.normalizeWowName('Thr all'), null)
+    assert.equal(core.normalizeWowName('Thr  all'), null)
     assert.equal(core.normalizeWowName('-Thrall'), null)
     assert.equal(core.normalizeWowName('Thrall123'), null)
+    assert.equal(core.normalizeWowName('Thr all!'), null)
 })
 
 test('setPlayerName stores, replaces, and isolates names per guild', () => {

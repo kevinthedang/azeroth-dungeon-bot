@@ -52,7 +52,7 @@ export const SetName: SlashCommand = {
                 await interaction.editReply({
                     embeds: [
                         errorEmbed(
-                            `**${input.trim()}** is not a valid character name. Use ${WOW_NAME_MIN_LENGTH}–${WOW_NAME_MAX_LENGTH} letters — apostrophes and hyphens are allowed.`,
+                            `**${input.trim()}** is not a valid character name. Use ${WOW_NAME_MIN_LENGTH}–${WOW_NAME_MAX_LENGTH} characters. Letters, spaces, apostrophes, and hyphens are allowed.`,
                             'Invalid character name',
                         ),
                     ],
