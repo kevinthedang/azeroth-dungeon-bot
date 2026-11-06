@@ -1,4 +1,5 @@
 export * from './backgrounds.js'
+export * from './channels.js'
 export * from './db.js'
 export * from './names.js'
 export * from './roles.js'

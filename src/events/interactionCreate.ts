@@ -1,5 +1,6 @@
 import { MessageFlags } from 'discord.js'
 import { errorEmbed, event, Events } from '../utils/index.js'
+import { getCommandChannel, isCommandChannelAllowed } from '../core/index.js'
 import commands from '../commands/index.js'
 
 /**
@@ -8,6 +9,11 @@ import commands from '../commands/index.js'
  */
 export default event(Events.InteractionCreate, async ({ log, client }, interaction) => {
     if (interaction.isAutocomplete()) {
+        if (interaction.guildId && interaction.commandName !== 'set-channel') {
+            const parentId = (interaction.channel as { parentId?: string | null } | null)?.parentId
+            if (!isCommandChannelAllowed(interaction.guildId, interaction.channelId, parentId)) return
+        }
+
         const command = commands.find(command => command.name === interaction.commandName)
         if (!command?.autocomplete) return
 
@@ -23,6 +29,18 @@ export default event(Events.InteractionCreate, async ({ log, client }, interacti
     if (!interaction.isChatInputCommand()) return
 
     log(`Interaction called '${interaction.commandName}' from ${interaction.user.tag}.`)
+
+    if (interaction.guildId && interaction.commandName !== 'set-channel') {
+        const parentId = (interaction.channel as { parentId?: string | null } | null)?.parentId
+        const allowedChannelId = getCommandChannel(interaction.guildId)
+        if (!isCommandChannelAllowed(interaction.guildId, interaction.channelId, parentId)) {
+            await interaction.reply({
+                embeds: [errorEmbed(`Bot commands can only be used in <#${allowedChannelId}> and its threads.`)],
+                flags: MessageFlags.Ephemeral,
+            }).catch(() => null)
+            return
+        }
+    }
 
     // ensure command exists, otherwise kill event
     const command = commands.find(command => command.name === interaction.commandName)

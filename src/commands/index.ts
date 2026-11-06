@@ -8,6 +8,7 @@ import { RemoveMember } from "./removeMember.js";
 import { SetName } from "./setName.js";
 import { SetRole } from "./setRole.js";
 import { SetSprite } from "./setSprite.js";
+import { SetChannel } from "./setChannel.js";
 import { Start } from "./start.js";
 import { Stop } from "./stop.js";
 import { SlashCommand } from "../utils/index.js";
@@ -23,6 +24,7 @@ export default [
     SetName,
     SetRole,
     SetSprite,
+    SetChannel,
     Start,
     Stop
 ] as SlashCommand[]

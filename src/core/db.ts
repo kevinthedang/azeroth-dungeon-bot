@@ -88,6 +88,11 @@ db.exec(`
         PRIMARY KEY (guild_id, user_id)
     );
 
+    CREATE TABLE IF NOT EXISTS guild_command_channels (
+        guild_id   TEXT PRIMARY KEY,
+        channel_id TEXT NOT NULL
+    );
+
     DROP INDEX IF EXISTS one_active_run;
 
     CREATE UNIQUE INDEX IF NOT EXISTS one_active_run
