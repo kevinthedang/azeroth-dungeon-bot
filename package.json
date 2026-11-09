@@ -1,13 +1,13 @@
 {
   "name": "azeroth-dungeon-bot",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "World of Warcraft Dungeon Tracking Discord Bot",
   "main": "dist/index.js",
   "exports": "./dist/index.js",
   "scripts": {
     "build": "tsc",
     "watch-build": "tsc --watch",
-    "watch-dev": "tsx watch src",
+    "dev": "tsx watch src",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -11,9 +11,10 @@ import { SetSprite } from "./setSprite.js";
 import { SetChannel } from "./setChannel.js";
 import { Start } from "./start.js";
 import { Stop } from "./stop.js";
+import { createHelpCommand } from "./help.js";
 import { SlashCommand } from "../utils/index.js";
 
-export default [
+const baseCommands = [
     AddMember,
     Clear,
     ClearName,
@@ -28,3 +29,7 @@ export default [
     Start,
     Stop
 ] as SlashCommand[]
+
+export const Help = createHelpCommand(baseCommands)
+
+export default [...baseCommands, Help]

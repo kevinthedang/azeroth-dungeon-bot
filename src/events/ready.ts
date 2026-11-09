@@ -16,7 +16,7 @@ export default event(Events.ClientReady, ({ log }, client) => {
     startTimerService(client)
 
     client.user.setActivity({
-        name: 'Monitoring Azeroth',
+        name: '/help for Info',
         type: ActivityType.Custom
     })
 

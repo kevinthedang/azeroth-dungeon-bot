@@ -30,7 +30,7 @@ export default event(Events.InteractionCreate, async ({ log, client }, interacti
 
     log(`Interaction called '${interaction.commandName}' from ${interaction.user.tag}.`)
 
-    if (interaction.guildId && interaction.commandName !== 'set-channel') {
+    if (interaction.guildId && interaction.commandName !== 'set-channel' && interaction.commandName !== 'help') {
         const parentId = interaction.channel?.isThread() ? interaction.channel.parentId : null
         const allowedChannelId = getCommandChannel(interaction.guildId)
         if (!isCommandChannelAllowed(interaction.guildId, interaction.channelId, parentId)) {

@@ -59,6 +59,7 @@ const commandLoaders = {
     setName: () => import('../src/commands/setName.js'),
     setSprite: () => import('../src/commands/setSprite.js'),
     setChannel: () => import('../src/commands/setChannel.js'),
+    help: () => import('../src/commands/index.js'),
     start: () => import('../src/commands/start.js'),
     stop: () => import('../src/commands/stop.js'),
 } as const
